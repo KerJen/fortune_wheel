@@ -17,13 +17,13 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final _screens = const [WheelScreen(), InventoryScreen(), CreditsScreen()];
+  static const _screens = [WheelScreen(), InventoryScreen(), CreditsScreen()];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: _screens[_currentIndex],
       bottomNavigationBar: SafeArea(
         child: _BottomBar(
           currentIndex: _currentIndex,
@@ -143,7 +143,10 @@ class _BottomBarItem extends StatelessWidget {
                       Flexible(
                         child: Text(
                           label,
-                          style: TextStyle(color: c, fontSize: 16, fontWeight: FontWeight.w600),
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: c,
+                            fontWeight: FontWeight.w600,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

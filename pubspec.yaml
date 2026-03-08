@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_animate: ^4.5.2
   flutter_svg: ^2.2.4
   material_symbols_icons: ^4.2906.0
 
