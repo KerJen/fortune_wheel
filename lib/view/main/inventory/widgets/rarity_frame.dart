@@ -55,7 +55,7 @@ class RareConfig extends RarityConfig {
         color: rarityRare,
         glowBlur: 8,
         glowOpacity: 0.4,
-        strokeWidth: 2,
+        strokeWidth: 3,
         particleCount: 0,
         shimmerDurationMs: 2500,
         animated: true,

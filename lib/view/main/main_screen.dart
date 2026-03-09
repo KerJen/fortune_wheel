@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -23,6 +26,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
+      extendBody: true,
       body: _screens[_currentIndex],
       bottomNavigationBar: SafeArea(
         child: _BottomBar(
@@ -56,29 +60,37 @@ class _BottomBar extends StatelessWidget {
 
   const _BottomBar({required this.currentIndex, required this.onTap, required this.items});
 
+  static const _radius = BorderRadius.all(Radius.circular(20));
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: hint, width: 1),
-        ),
-        padding: const EdgeInsets.all(6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(items.length, (index) {
-            return Flexible(
-              child: _BottomBarItem(
-                icon: items[index].icon,
-                label: items[index].label,
-                isSelected: index == currentIndex,
-                onTap: () => onTap(index),
-              ),
-            );
-          }),
+      padding: const EdgeInsets.all(20),
+      child: ClipRRect(
+        borderRadius: _radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: bg.withValues(alpha: 0.6),
+              borderRadius: _radius,
+              border: Border.all(color: hint, width: 1),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(items.length, (index) {
+                return Flexible(
+                  child: _BottomBarItem(
+                    icon: items[index].icon,
+                    label: items[index].label,
+                    isSelected: index == currentIndex,
+                    onTap: () => onTap(index),
+                  ),
+                );
+              }),
+            ),
+          ),
         ),
       ),
     );
@@ -98,9 +110,8 @@ class _BottomBarItem extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _iconSize = 24.0;
-  static const _gap = 8.0;
-  static const _paddingH = 20.0;
+  static const double _iconSize = 24;
+  static const double _gap = 10;
 
   static const _duration = Duration(milliseconds: 100);
 
@@ -108,56 +119,66 @@ class _BottomBarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final targetColor = isSelected ? primary : hint;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: TweenAnimationBuilder<Color?>(
-        tween: ColorTween(end: targetColor),
-        duration: _duration,
-        curve: Curves.fastOutSlowIn,
-        builder: (context, color, _) {
-          final c = color ?? targetColor;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: TweenAnimationBuilder<Color?>(
+          tween: ColorTween(end: targetColor),
+          duration: _duration,
+          curve: Curves.fastOutSlowIn,
+          builder: (context, color, _) {
+            final accentColor = color ?? targetColor;
 
-          return AnimatedContainer(
-            duration: _duration,
-            decoration: BoxDecoration(
-              color: isSelected ? surface : surface.withValues(alpha: 0),
+            return ClipRRect(
               borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: _paddingH),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final showLabel = constraints.maxWidth >= _iconSize + _gap + 20;
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconTheme(
-                      data: IconThemeData(color: c, size: _iconSize),
-                      child: ColorFiltered(
-                        colorFilter: ColorFilter.mode(c, BlendMode.srcIn),
-                        child: icon,
-                      ),
-                    ),
-                    if (showLabel) ...[
-                      const SizedBox(width: _gap),
-                      Flexible(
-                        child: Text(
-                          label,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: c,
-                            fontWeight: FontWeight.w600,
+              child: BackdropFilter(
+                filter: isSelected ? ImageFilter.blur(sigmaX: 20, sigmaY: 20) : ImageFilter.blur(),
+                child: AnimatedContainer(
+                  duration: _duration,
+                  decoration: BoxDecoration(
+                    color: isSelected ? surface.withValues(alpha: 0.5) : surface.withValues(alpha: 0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.all(10),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final showLabel = constraints.maxWidth >= _iconSize + _gap + 20;
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconTheme(
+                            data: IconThemeData(color: accentColor, size: _iconSize),
+                            child: ColorFiltered(
+                              colorFilter: ColorFilter.mode(accentColor, BlendMode.srcIn),
+                              child: icon,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ],
-                );
-              },
-            ),
-          );
-        },
+                          if (showLabel) ...[
+                            const SizedBox(width: _gap),
+                            Flexible(
+                              child: Text(
+                                label,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: accentColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -13,8 +13,8 @@ class CreditsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
-            padding: EdgeInsets.only(left: 24, top: 16),
-            child: _Title(),
+            padding: EdgeInsets.only(top: 16),
+            child: Center(child: _Title()),
           ),
           const Expanded(
             child: Center(

@@ -22,8 +22,8 @@ class InventoryScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
-            padding: EdgeInsets.only(left: 24, top: 16),
-            child: _Title(),
+            padding: EdgeInsets.only(top: 16),
+            child: Center(child: _Title()),
           ),
           const SizedBox(height: 16),
           Expanded(
@@ -47,10 +47,7 @@ class _Title extends StatelessWidget {
         fontSize: 28,
         fontWeight: FontWeight.w700,
       ),
-    )
-        .animate()
-        .fadeIn(duration: 400.ms, curve: Curves.easeOut)
-        .slideX(begin: -0.1, end: 0, duration: 400.ms, curve: Curves.easeOut);
+    ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut).slideX(begin: -0.1, end: 0, duration: 400.ms, curve: Curves.easeOut);
   }
 }
 
@@ -96,17 +93,17 @@ class _GiftCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: hint, width: 1),
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       child: Row(
         children: [
           RarityFrame(
             rarity: gift.rarity,
             child: _GiftImage(imagePath: gift.imagePath),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               gift.name,
@@ -133,9 +130,9 @@ class _GiftImage extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 56,
-        height: 56,
-        color: const Color(0xFFD9D9D9),
+        width: 60,
+        height: 60,
+        color: Colors.transparent,
         child: imagePath != null ? Image.asset(imagePath!, fit: BoxFit.cover) : null,
       ),
     );
