@@ -10,6 +10,7 @@ abstract class GiftRepository {
   List<InventoryItem> getInventory();
   Stream<List<InventoryItem>> watchInventory();
   Future<void> claimGift(Gift gift);
+  Future<void> clearInventory();
 }
 
 @Injectable(as: GiftRepository)
@@ -27,6 +28,9 @@ class GiftRepositoryImpl implements GiftRepository {
 
   @override
   Stream<List<InventoryItem>> watchInventory() => _giftSource.watchInventory();
+
+  @override
+  Future<void> clearInventory() => _giftSource.clearInventory();
 
   @override
   Future<void> claimGift(Gift gift) async {

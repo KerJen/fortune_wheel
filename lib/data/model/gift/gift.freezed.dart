@@ -38,7 +38,7 @@ Gift _$GiftFromJson(
 /// @nodoc
 mixin _$Gift {
 
- String get name; GiftRarity get rarity;
+ String get name; String? get imagePath; GiftRarity get rarity;
 /// Create a copy of Gift
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -51,16 +51,16 @@ $GiftCopyWith<Gift> get copyWith => _$GiftCopyWithImpl<Gift>(this as Gift, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Gift&&(identical(other.name, name) || other.name == name)&&(identical(other.rarity, rarity) || other.rarity == rarity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Gift&&(identical(other.name, name) || other.name == name)&&(identical(other.imagePath, imagePath) || other.imagePath == imagePath)&&(identical(other.rarity, rarity) || other.rarity == rarity));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,rarity);
+int get hashCode => Object.hash(runtimeType,name,imagePath,rarity);
 
 @override
 String toString() {
-  return 'Gift(name: $name, rarity: $rarity)';
+  return 'Gift(name: $name, imagePath: $imagePath, rarity: $rarity)';
 }
 
 
@@ -71,7 +71,7 @@ abstract mixin class $GiftCopyWith<$Res>  {
   factory $GiftCopyWith(Gift value, $Res Function(Gift) _then) = _$GiftCopyWithImpl;
 @useResult
 $Res call({
- String name, GiftRarity rarity
+ String name, String? imagePath, GiftRarity rarity
 });
 
 
@@ -88,10 +88,11 @@ class _$GiftCopyWithImpl<$Res>
 
 /// Create a copy of Gift
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? rarity = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? imagePath = freezed,Object? rarity = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,rarity: null == rarity ? _self.rarity : rarity // ignore: cast_nullable_to_non_nullable
+as String,imagePath: freezed == imagePath ? _self.imagePath : imagePath // ignore: cast_nullable_to_non_nullable
+as String?,rarity: null == rarity ? _self.rarity : rarity // ignore: cast_nullable_to_non_nullable
 as GiftRarity,
   ));
 }
@@ -177,11 +178,11 @@ return coin(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String name,  String? imagePath,  GiftRarity rarity)?  regular,TResult Function( String name,  int value,  GiftRarity rarity)?  coin,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String name,  String? imagePath,  GiftRarity rarity)?  regular,TResult Function( String name,  String? imagePath,  int value,  GiftRarity rarity)?  coin,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RegularGift() when regular != null:
 return regular(_that.name,_that.imagePath,_that.rarity);case CoinGift() when coin != null:
-return coin(_that.name,_that.value,_that.rarity);case _:
+return coin(_that.name,_that.imagePath,_that.value,_that.rarity);case _:
   return orElse();
 
 }
@@ -199,11 +200,11 @@ return coin(_that.name,_that.value,_that.rarity);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String name,  String? imagePath,  GiftRarity rarity)  regular,required TResult Function( String name,  int value,  GiftRarity rarity)  coin,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String name,  String? imagePath,  GiftRarity rarity)  regular,required TResult Function( String name,  String? imagePath,  int value,  GiftRarity rarity)  coin,}) {final _that = this;
 switch (_that) {
 case RegularGift():
 return regular(_that.name,_that.imagePath,_that.rarity);case CoinGift():
-return coin(_that.name,_that.value,_that.rarity);}
+return coin(_that.name,_that.imagePath,_that.value,_that.rarity);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -217,11 +218,11 @@ return coin(_that.name,_that.value,_that.rarity);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String name,  String? imagePath,  GiftRarity rarity)?  regular,TResult? Function( String name,  int value,  GiftRarity rarity)?  coin,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String name,  String? imagePath,  GiftRarity rarity)?  regular,TResult? Function( String name,  String? imagePath,  int value,  GiftRarity rarity)?  coin,}) {final _that = this;
 switch (_that) {
 case RegularGift() when regular != null:
 return regular(_that.name,_that.imagePath,_that.rarity);case CoinGift() when coin != null:
-return coin(_that.name,_that.value,_that.rarity);case _:
+return coin(_that.name,_that.imagePath,_that.value,_that.rarity);case _:
   return null;
 
 }
@@ -237,7 +238,7 @@ class RegularGift implements Gift {
   factory RegularGift.fromJson(Map<String, dynamic> json) => _$RegularGiftFromJson(json);
 
 @override final  String name;
- final  String? imagePath;
+@override final  String? imagePath;
 @override final  GiftRarity rarity;
 
 @JsonKey(name: 'runtimeType')
@@ -310,10 +311,11 @@ as GiftRarity,
 @JsonSerializable()
 
 class CoinGift implements Gift {
-  const CoinGift({required this.name, required this.value, required this.rarity, final  String? $type}): $type = $type ?? 'coin';
+  const CoinGift({required this.name, this.imagePath, required this.value, required this.rarity, final  String? $type}): $type = $type ?? 'coin';
   factory CoinGift.fromJson(Map<String, dynamic> json) => _$CoinGiftFromJson(json);
 
 @override final  String name;
+@override final  String? imagePath;
  final  int value;
 @override final  GiftRarity rarity;
 
@@ -334,16 +336,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CoinGift&&(identical(other.name, name) || other.name == name)&&(identical(other.value, value) || other.value == value)&&(identical(other.rarity, rarity) || other.rarity == rarity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CoinGift&&(identical(other.name, name) || other.name == name)&&(identical(other.imagePath, imagePath) || other.imagePath == imagePath)&&(identical(other.value, value) || other.value == value)&&(identical(other.rarity, rarity) || other.rarity == rarity));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,value,rarity);
+int get hashCode => Object.hash(runtimeType,name,imagePath,value,rarity);
 
 @override
 String toString() {
-  return 'Gift.coin(name: $name, value: $value, rarity: $rarity)';
+  return 'Gift.coin(name: $name, imagePath: $imagePath, value: $value, rarity: $rarity)';
 }
 
 
@@ -354,7 +356,7 @@ abstract mixin class $CoinGiftCopyWith<$Res> implements $GiftCopyWith<$Res> {
   factory $CoinGiftCopyWith(CoinGift value, $Res Function(CoinGift) _then) = _$CoinGiftCopyWithImpl;
 @override @useResult
 $Res call({
- String name, int value, GiftRarity rarity
+ String name, String? imagePath, int value, GiftRarity rarity
 });
 
 
@@ -371,10 +373,11 @@ class _$CoinGiftCopyWithImpl<$Res>
 
 /// Create a copy of Gift
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? value = null,Object? rarity = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? imagePath = freezed,Object? value = null,Object? rarity = null,}) {
   return _then(CoinGift(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
+as String,imagePath: freezed == imagePath ? _self.imagePath : imagePath // ignore: cast_nullable_to_non_nullable
+as String?,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as int,rarity: null == rarity ? _self.rarity : rarity // ignore: cast_nullable_to_non_nullable
 as GiftRarity,
   ));

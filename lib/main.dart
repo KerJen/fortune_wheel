@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
 import 'injection.dart';
 import 'view/colors.dart';
@@ -8,6 +9,7 @@ import 'view/main/main_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureDependencies();
+  await SoLoud.instance.init();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

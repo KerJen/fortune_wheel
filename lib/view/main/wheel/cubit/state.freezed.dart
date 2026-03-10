@@ -14,61 +14,30 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WheelState {
 
- int get balance;
-/// Create a copy of WheelState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$WheelStateCopyWith<WheelState> get copyWith => _$WheelStateCopyWithImpl<WheelState>(this as WheelState, _$identity);
+
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelState&&(identical(other.balance, balance) || other.balance == balance));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelState);
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,balance);
+int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'WheelState(balance: $balance)';
+  return 'WheelState()';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $WheelStateCopyWith<$Res>  {
-  factory $WheelStateCopyWith(WheelState value, $Res Function(WheelState) _then) = _$WheelStateCopyWithImpl;
-@useResult
-$Res call({
- int balance
-});
-
-
-
-
-}
-/// @nodoc
-class _$WheelStateCopyWithImpl<$Res>
-    implements $WheelStateCopyWith<$Res> {
-  _$WheelStateCopyWithImpl(this._self, this._then);
-
-  final WheelState _self;
-  final $Res Function(WheelState) _then;
-
-/// Create a copy of WheelState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? balance = null,}) {
-  return _then(_self.copyWith(
-balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
-as int,
-  ));
-}
-
+class $WheelStateCopyWith<$Res>  {
+$WheelStateCopyWith(WheelState _, $Res Function(WheelState) __);
 }
 
 
@@ -86,14 +55,15 @@ extension WheelStatePatterns on WheelState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( WheelIdle value)?  idle,TResult Function( WheelSpinning value)?  spinning,TResult Function( WheelLanding value)?  landing,TResult Function( WheelStopped value)?  stopped,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( WheelIdle value)?  idle,TResult Function( WheelSpinning value)?  spinning,TResult Function( WheelLanding value)?  landing,TResult Function( WheelStopped value)?  stopped,TResult Function( WheelFailure value)?  failure,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case WheelIdle() when idle != null:
 return idle(_that);case WheelSpinning() when spinning != null:
 return spinning(_that);case WheelLanding() when landing != null:
 return landing(_that);case WheelStopped() when stopped != null:
-return stopped(_that);case _:
+return stopped(_that);case WheelFailure() when failure != null:
+return failure(_that);case _:
   return orElse();
 
 }
@@ -111,14 +81,15 @@ return stopped(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( WheelIdle value)  idle,required TResult Function( WheelSpinning value)  spinning,required TResult Function( WheelLanding value)  landing,required TResult Function( WheelStopped value)  stopped,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( WheelIdle value)  idle,required TResult Function( WheelSpinning value)  spinning,required TResult Function( WheelLanding value)  landing,required TResult Function( WheelStopped value)  stopped,required TResult Function( WheelFailure value)  failure,}){
 final _that = this;
 switch (_that) {
 case WheelIdle():
 return idle(_that);case WheelSpinning():
 return spinning(_that);case WheelLanding():
 return landing(_that);case WheelStopped():
-return stopped(_that);}
+return stopped(_that);case WheelFailure():
+return failure(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -132,14 +103,15 @@ return stopped(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( WheelIdle value)?  idle,TResult? Function( WheelSpinning value)?  spinning,TResult? Function( WheelLanding value)?  landing,TResult? Function( WheelStopped value)?  stopped,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( WheelIdle value)?  idle,TResult? Function( WheelSpinning value)?  spinning,TResult? Function( WheelLanding value)?  landing,TResult? Function( WheelStopped value)?  stopped,TResult? Function( WheelFailure value)?  failure,}){
 final _that = this;
 switch (_that) {
 case WheelIdle() when idle != null:
 return idle(_that);case WheelSpinning() when spinning != null:
 return spinning(_that);case WheelLanding() when landing != null:
 return landing(_that);case WheelStopped() when stopped != null:
-return stopped(_that);case _:
+return stopped(_that);case WheelFailure() when failure != null:
+return failure(_that);case _:
   return null;
 
 }
@@ -156,13 +128,14 @@ return stopped(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int balance,  double? savedDegrees)?  idle,TResult Function( int balance)?  spinning,TResult Function( int balance,  Gift targetGift)?  landing,TResult Function( int balance,  Gift wonGift)?  stopped,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( double? savedDegrees)?  idle,TResult Function()?  spinning,TResult Function( Gift targetGift)?  landing,TResult Function( Gift wonGift)?  stopped,TResult Function( String message)?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case WheelIdle() when idle != null:
-return idle(_that.balance,_that.savedDegrees);case WheelSpinning() when spinning != null:
-return spinning(_that.balance);case WheelLanding() when landing != null:
-return landing(_that.balance,_that.targetGift);case WheelStopped() when stopped != null:
-return stopped(_that.balance,_that.wonGift);case _:
+return idle(_that.savedDegrees);case WheelSpinning() when spinning != null:
+return spinning();case WheelLanding() when landing != null:
+return landing(_that.targetGift);case WheelStopped() when stopped != null:
+return stopped(_that.wonGift);case WheelFailure() when failure != null:
+return failure(_that.message);case _:
   return orElse();
 
 }
@@ -180,13 +153,14 @@ return stopped(_that.balance,_that.wonGift);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int balance,  double? savedDegrees)  idle,required TResult Function( int balance)  spinning,required TResult Function( int balance,  Gift targetGift)  landing,required TResult Function( int balance,  Gift wonGift)  stopped,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( double? savedDegrees)  idle,required TResult Function()  spinning,required TResult Function( Gift targetGift)  landing,required TResult Function( Gift wonGift)  stopped,required TResult Function( String message)  failure,}) {final _that = this;
 switch (_that) {
 case WheelIdle():
-return idle(_that.balance,_that.savedDegrees);case WheelSpinning():
-return spinning(_that.balance);case WheelLanding():
-return landing(_that.balance,_that.targetGift);case WheelStopped():
-return stopped(_that.balance,_that.wonGift);}
+return idle(_that.savedDegrees);case WheelSpinning():
+return spinning();case WheelLanding():
+return landing(_that.targetGift);case WheelStopped():
+return stopped(_that.wonGift);case WheelFailure():
+return failure(_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -200,13 +174,14 @@ return stopped(_that.balance,_that.wonGift);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int balance,  double? savedDegrees)?  idle,TResult? Function( int balance)?  spinning,TResult? Function( int balance,  Gift targetGift)?  landing,TResult? Function( int balance,  Gift wonGift)?  stopped,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( double? savedDegrees)?  idle,TResult? Function()?  spinning,TResult? Function( Gift targetGift)?  landing,TResult? Function( Gift wonGift)?  stopped,TResult? Function( String message)?  failure,}) {final _that = this;
 switch (_that) {
 case WheelIdle() when idle != null:
-return idle(_that.balance,_that.savedDegrees);case WheelSpinning() when spinning != null:
-return spinning(_that.balance);case WheelLanding() when landing != null:
-return landing(_that.balance,_that.targetGift);case WheelStopped() when stopped != null:
-return stopped(_that.balance,_that.wonGift);case _:
+return idle(_that.savedDegrees);case WheelSpinning() when spinning != null:
+return spinning();case WheelLanding() when landing != null:
+return landing(_that.targetGift);case WheelStopped() when stopped != null:
+return stopped(_that.wonGift);case WheelFailure() when failure != null:
+return failure(_that.message);case _:
   return null;
 
 }
@@ -218,15 +193,14 @@ return stopped(_that.balance,_that.wonGift);case _:
 
 
 class WheelIdle implements WheelState {
-  const WheelIdle({required this.balance, this.savedDegrees});
+  const WheelIdle({this.savedDegrees});
   
 
-@override final  int balance;
  final  double? savedDegrees;
 
 /// Create a copy of WheelState
 /// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
+@JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $WheelIdleCopyWith<WheelIdle> get copyWith => _$WheelIdleCopyWithImpl<WheelIdle>(this, _$identity);
 
@@ -234,16 +208,16 @@ $WheelIdleCopyWith<WheelIdle> get copyWith => _$WheelIdleCopyWithImpl<WheelIdle>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelIdle&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.savedDegrees, savedDegrees) || other.savedDegrees == savedDegrees));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelIdle&&(identical(other.savedDegrees, savedDegrees) || other.savedDegrees == savedDegrees));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,balance,savedDegrees);
+int get hashCode => Object.hash(runtimeType,savedDegrees);
 
 @override
 String toString() {
-  return 'WheelState.idle(balance: $balance, savedDegrees: $savedDegrees)';
+  return 'WheelState.idle(savedDegrees: $savedDegrees)';
 }
 
 
@@ -252,9 +226,9 @@ String toString() {
 /// @nodoc
 abstract mixin class $WheelIdleCopyWith<$Res> implements $WheelStateCopyWith<$Res> {
   factory $WheelIdleCopyWith(WheelIdle value, $Res Function(WheelIdle) _then) = _$WheelIdleCopyWithImpl;
-@override @useResult
+@useResult
 $Res call({
- int balance, double? savedDegrees
+ double? savedDegrees
 });
 
 
@@ -271,10 +245,9 @@ class _$WheelIdleCopyWithImpl<$Res>
 
 /// Create a copy of WheelState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? balance = null,Object? savedDegrees = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? savedDegrees = freezed,}) {
   return _then(WheelIdle(
-balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
-as int,savedDegrees: freezed == savedDegrees ? _self.savedDegrees : savedDegrees // ignore: cast_nullable_to_non_nullable
+savedDegrees: freezed == savedDegrees ? _self.savedDegrees : savedDegrees // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }
@@ -286,81 +259,46 @@ as double?,
 
 
 class WheelSpinning implements WheelState {
-  const WheelSpinning({required this.balance});
+  const WheelSpinning();
   
 
-@override final  int balance;
 
-/// Create a copy of WheelState
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$WheelSpinningCopyWith<WheelSpinning> get copyWith => _$WheelSpinningCopyWithImpl<WheelSpinning>(this, _$identity);
+
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelSpinning&&(identical(other.balance, balance) || other.balance == balance));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelSpinning);
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,balance);
+int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'WheelState.spinning(balance: $balance)';
+  return 'WheelState.spinning()';
 }
 
 
 }
 
-/// @nodoc
-abstract mixin class $WheelSpinningCopyWith<$Res> implements $WheelStateCopyWith<$Res> {
-  factory $WheelSpinningCopyWith(WheelSpinning value, $Res Function(WheelSpinning) _then) = _$WheelSpinningCopyWithImpl;
-@override @useResult
-$Res call({
- int balance
-});
 
 
-
-
-}
-/// @nodoc
-class _$WheelSpinningCopyWithImpl<$Res>
-    implements $WheelSpinningCopyWith<$Res> {
-  _$WheelSpinningCopyWithImpl(this._self, this._then);
-
-  final WheelSpinning _self;
-  final $Res Function(WheelSpinning) _then;
-
-/// Create a copy of WheelState
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? balance = null,}) {
-  return _then(WheelSpinning(
-balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
-as int,
-  ));
-}
-
-
-}
 
 /// @nodoc
 
 
 class WheelLanding implements WheelState {
-  const WheelLanding({required this.balance, required this.targetGift});
+  const WheelLanding({required this.targetGift});
   
 
-@override final  int balance;
  final  Gift targetGift;
 
 /// Create a copy of WheelState
 /// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
+@JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $WheelLandingCopyWith<WheelLanding> get copyWith => _$WheelLandingCopyWithImpl<WheelLanding>(this, _$identity);
 
@@ -368,16 +306,16 @@ $WheelLandingCopyWith<WheelLanding> get copyWith => _$WheelLandingCopyWithImpl<W
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelLanding&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.targetGift, targetGift) || other.targetGift == targetGift));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelLanding&&(identical(other.targetGift, targetGift) || other.targetGift == targetGift));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,balance,targetGift);
+int get hashCode => Object.hash(runtimeType,targetGift);
 
 @override
 String toString() {
-  return 'WheelState.landing(balance: $balance, targetGift: $targetGift)';
+  return 'WheelState.landing(targetGift: $targetGift)';
 }
 
 
@@ -386,9 +324,9 @@ String toString() {
 /// @nodoc
 abstract mixin class $WheelLandingCopyWith<$Res> implements $WheelStateCopyWith<$Res> {
   factory $WheelLandingCopyWith(WheelLanding value, $Res Function(WheelLanding) _then) = _$WheelLandingCopyWithImpl;
-@override @useResult
+@useResult
 $Res call({
- int balance, Gift targetGift
+ Gift targetGift
 });
 
 
@@ -405,10 +343,9 @@ class _$WheelLandingCopyWithImpl<$Res>
 
 /// Create a copy of WheelState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? balance = null,Object? targetGift = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? targetGift = null,}) {
   return _then(WheelLanding(
-balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
-as int,targetGift: null == targetGift ? _self.targetGift : targetGift // ignore: cast_nullable_to_non_nullable
+targetGift: null == targetGift ? _self.targetGift : targetGift // ignore: cast_nullable_to_non_nullable
 as Gift,
   ));
 }
@@ -429,15 +366,14 @@ $GiftCopyWith<$Res> get targetGift {
 
 
 class WheelStopped implements WheelState {
-  const WheelStopped({required this.balance, required this.wonGift});
+  const WheelStopped({required this.wonGift});
   
 
-@override final  int balance;
  final  Gift wonGift;
 
 /// Create a copy of WheelState
 /// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
+@JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $WheelStoppedCopyWith<WheelStopped> get copyWith => _$WheelStoppedCopyWithImpl<WheelStopped>(this, _$identity);
 
@@ -445,16 +381,16 @@ $WheelStoppedCopyWith<WheelStopped> get copyWith => _$WheelStoppedCopyWithImpl<W
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelStopped&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.wonGift, wonGift) || other.wonGift == wonGift));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelStopped&&(identical(other.wonGift, wonGift) || other.wonGift == wonGift));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,balance,wonGift);
+int get hashCode => Object.hash(runtimeType,wonGift);
 
 @override
 String toString() {
-  return 'WheelState.stopped(balance: $balance, wonGift: $wonGift)';
+  return 'WheelState.stopped(wonGift: $wonGift)';
 }
 
 
@@ -463,9 +399,9 @@ String toString() {
 /// @nodoc
 abstract mixin class $WheelStoppedCopyWith<$Res> implements $WheelStateCopyWith<$Res> {
   factory $WheelStoppedCopyWith(WheelStopped value, $Res Function(WheelStopped) _then) = _$WheelStoppedCopyWithImpl;
-@override @useResult
+@useResult
 $Res call({
- int balance, Gift wonGift
+ Gift wonGift
 });
 
 
@@ -482,10 +418,9 @@ class _$WheelStoppedCopyWithImpl<$Res>
 
 /// Create a copy of WheelState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? balance = null,Object? wonGift = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? wonGift = null,}) {
   return _then(WheelStopped(
-balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
-as int,wonGift: null == wonGift ? _self.wonGift : wonGift // ignore: cast_nullable_to_non_nullable
+wonGift: null == wonGift ? _self.wonGift : wonGift // ignore: cast_nullable_to_non_nullable
 as Gift,
   ));
 }
@@ -500,6 +435,72 @@ $GiftCopyWith<$Res> get wonGift {
     return _then(_self.copyWith(wonGift: value));
   });
 }
+}
+
+/// @nodoc
+
+
+class WheelFailure implements WheelState {
+  const WheelFailure({required this.message});
+  
+
+ final  String message;
+
+/// Create a copy of WheelState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$WheelFailureCopyWith<WheelFailure> get copyWith => _$WheelFailureCopyWithImpl<WheelFailure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelFailure&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'WheelState.failure(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $WheelFailureCopyWith<$Res> implements $WheelStateCopyWith<$Res> {
+  factory $WheelFailureCopyWith(WheelFailure value, $Res Function(WheelFailure) _then) = _$WheelFailureCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$WheelFailureCopyWithImpl<$Res>
+    implements $WheelFailureCopyWith<$Res> {
+  _$WheelFailureCopyWithImpl(this._self, this._then);
+
+  final WheelFailure _self;
+  final $Res Function(WheelFailure) _then;
+
+/// Create a copy of WheelState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(WheelFailure(
+message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
 }
 
 // dart format on

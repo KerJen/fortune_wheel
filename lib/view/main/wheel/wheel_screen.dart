@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../data/model/gift/gift.dart';
 import '../../../injection.dart';
 import '../../colors.dart';
+import '../balance/balance.dart';
 import 'cubit/cubit.dart';
 import 'cubit/state.dart';
 import 'widgets/fortune_wheel.dart';
+import 'widgets/gift_reveal_overlay.dart';
 
 class WheelScreen extends StatelessWidget {
   const WheelScreen({super.key});
@@ -31,6 +34,7 @@ class _WheelBody extends StatefulWidget {
 
 class _WheelBodyState extends State<_WheelBody> {
   final _wheelController = FortuneWheelController();
+  OverlayEntry? _revealOverlay;
 
   @override
   void didChangeDependencies() {
@@ -39,6 +43,29 @@ class _WheelBodyState extends State<_WheelBody> {
     _wheelController
       ..onSpin = cubit.spin
       ..onSpinComplete = (degrees) => cubit.onSpinComplete(degrees);
+    _wheelController.onLongPressCenter = cubit.resetBalance;
+  }
+
+  @override
+  void dispose() {
+    _revealOverlay?.remove();
+    super.dispose();
+  }
+
+  void _showGiftReveal(Gift gift) {
+    _revealOverlay?.remove();
+    _revealOverlay = OverlayEntry(
+      builder: (_) => GiftRevealOverlay(
+        wonGift: gift,
+        onCollect: _dismissReveal,
+      ),
+    );
+    Overlay.of(context).insert(_revealOverlay!);
+  }
+
+  void _dismissReveal() {
+    _revealOverlay?.remove();
+    _revealOverlay = null;
   }
 
   @override
@@ -49,6 +76,15 @@ class _WheelBodyState extends State<_WheelBody> {
           _wheelController.startFreeSpin();
         } else if (state is WheelLanding) {
           _wheelController.spinTo(state.targetGift, 1000);
+        } else if (state is WheelStopped) {
+          _showGiftReveal(state.wonGift);
+        } else if (state is WheelFailure) {
+          _wheelController.stopSpin();
+          showDialog(
+            context: context,
+            barrierColor: Colors.black87,
+            builder: (_) => _FailureDialog(message: state.message),
+          );
         }
       },
       child: SafeArea(
@@ -77,7 +113,7 @@ class _WheelBodyState extends State<_WheelBody> {
                 },
               ),
               const SizedBox(height: 30),
-              const _Balance(),
+              const Balance(),
               const Spacer(),
               const _SpinButton(),
               const SizedBox(height: 10),
@@ -102,33 +138,38 @@ class _Logo extends StatelessWidget {
   }
 }
 
-class _Balance extends StatelessWidget {
-  const _Balance();
+class _SpinButton extends StatelessWidget {
+  const _SpinButton();
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<WheelCubit, WheelState>(
-      buildWhen: (prev, curr) => prev.balance != curr.balance,
       builder: (context, state) {
-        return Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Symbols.favorite_rounded),
-              const SizedBox(width: 10),
-              Text(
-                '${state.balance}',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+        final isSpinning = state is WheelSpinning || state is WheelLanding || state is WheelStopped;
+
+        return AnimatedOpacity(
+          opacity: isSpinning ? 0.5 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          child: SizedBox(
+            width: 200,
+            height: 50,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(colors: [primary, secondary]),
+              ),
+              child: MaterialButton(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                onPressed: isSpinning ? null : () => context.read<WheelCubit>().spin(),
+                child: Text(
+                  'Spin!',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: bg,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
         );
       },
@@ -136,29 +177,58 @@ class _Balance extends StatelessWidget {
   }
 }
 
-class _SpinButton extends StatelessWidget {
-  const _SpinButton();
+class _FailureDialog extends StatelessWidget {
+  final String message;
+
+  const _FailureDialog({required this.message});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 200,
-      height: 50,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(colors: [primary, secondary]),
-        ),
-        child: MaterialButton(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          onPressed: () => context.read<WheelCubit>().spin(),
-          child: Text(
-            'Spin!',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: bg,
-              fontWeight: FontWeight.bold,
+    return Dialog(
+      backgroundColor: bg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: hint, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Symbols.error_rounded, color: primary, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.white,
+                  ),
             ),
-          ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: const LinearGradient(colors: [primary, secondary]),
+                ),
+                child: MaterialButton(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'OK',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: bg,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

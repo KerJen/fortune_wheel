@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../colors.dart';
+import '../dimens.dart';
 import 'credits/credits_screen.dart';
 import 'inventory/inventory_screen.dart';
 import 'wheel/wheel_screen.dart';
@@ -40,10 +41,16 @@ class _MainScreenState extends State<MainScreen> {
           items: [
             _BottomBarItemData(
               icon: SvgPicture.asset('assets/icons/wheel.svg', width: 24, height: 24),
-              label: 'Wheel',
+              title: 'Wheel',
             ),
-            const _BottomBarItemData(icon: Icon(Symbols.inventory_2_rounded), label: 'Inventory'),
-            const _BottomBarItemData(icon: Icon(Symbols.stylus_fountain_pen_rounded), label: 'Credits'),
+            const _BottomBarItemData(
+              icon: Icon(Symbols.inventory_2_rounded),
+              title: 'Gifts',
+            ),
+            const _BottomBarItemData(
+              icon: Icon(Symbols.stylus_fountain_pen_rounded),
+              title: 'Credits',
+            ),
           ],
         ),
       ),
@@ -53,9 +60,9 @@ class _MainScreenState extends State<MainScreen> {
 
 class _BottomBarItemData {
   final Widget icon;
-  final String label;
+  final String title;
 
-  const _BottomBarItemData({required this.icon, required this.label});
+  const _BottomBarItemData({required this.icon, required this.title});
 }
 
 class _BottomBar extends StatelessWidget {
@@ -88,7 +95,7 @@ class _BottomBar extends StatelessWidget {
                 return Flexible(
                   child: _BottomBarItem(
                     icon: items[index].icon,
-                    label: items[index].label,
+                    title: items[index].title,
                     isSelected: index == currentIndex,
                     onTap: () => onTap(index),
                   ),
@@ -104,19 +111,18 @@ class _BottomBar extends StatelessWidget {
 
 class _BottomBarItem extends StatelessWidget {
   final Widget icon;
-  final String label;
+  final String title;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _BottomBarItem({
     required this.icon,
-    required this.label,
+    required this.title,
     required this.isSelected,
     required this.onTap,
   });
 
   static const double _iconSize = 24;
-  static const double _gap = 10;
 
   static const _duration = Duration(milliseconds: 100);
 
@@ -146,38 +152,26 @@ class _BottomBarItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.all(10),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final showLabel = constraints.maxWidth >= _iconSize + _gap + 20;
-
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconTheme(
-                            data: IconThemeData(color: accentColor, size: _iconSize),
-                            child: ColorFiltered(
-                              colorFilter: ColorFilter.mode(accentColor, BlendMode.srcIn),
-                              child: icon,
-                            ),
-                          ),
-                          if (showLabel) ...[
-                            const SizedBox(width: _gap),
-                            Flexible(
-                              child: Text(
-                                label,
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: accentColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ],
-                      );
-                    },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconTheme(
+                        data: IconThemeData(color: accentColor, size: _iconSize),
+                        child: ColorFiltered(
+                          colorFilter: ColorFilter.mode(accentColor, BlendMode.srcIn),
+                          child: icon,
+                        ),
+                      ),
+                      const SizedBox(width: spacing10),
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: accentColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

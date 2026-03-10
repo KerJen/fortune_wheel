@@ -7,6 +7,7 @@ abstract class BalanceRepository {
   Stream<int> watchBalance();
   Future<void> addCoins(int amount);
   Future<bool> spendCoins(int amount);
+  Future<void> resetBalance();
 }
 
 @Injectable(as: BalanceRepository)
@@ -26,4 +27,7 @@ class BalanceRepositoryImpl implements BalanceRepository {
 
   @override
   Future<bool> spendCoins(int amount) => _source.spendCoins(amount);
+
+  @override
+  Future<void> resetBalance() => _source.resetBalance();
 }

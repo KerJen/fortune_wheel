@@ -8,6 +8,7 @@ abstract class BalanceLocalSource {
   Stream<int> watchBalance();
   Future<void> addCoins(int amount);
   Future<bool> spendCoins(int amount);
+  Future<void> resetBalance();
 }
 
 @Singleton(as: BalanceLocalSource)
@@ -42,5 +43,11 @@ class BalanceLocalSourceImpl implements BalanceLocalSource {
     await _prefs.setInt(_key, current - amount);
     _controller.add(getBalance());
     return true;
+  }
+
+  @override
+  Future<void> resetBalance() async {
+    await _prefs.setInt(_key, _initialBalance);
+    _controller.add(_initialBalance);
   }
 }

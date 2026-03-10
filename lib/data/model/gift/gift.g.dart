@@ -30,6 +30,7 @@ const _$GiftRarityEnumMap = {
 
 CoinGift _$CoinGiftFromJson(Map<String, dynamic> json) => CoinGift(
   name: json['name'] as String,
+  imagePath: json['imagePath'] as String?,
   value: (json['value'] as num).toInt(),
   rarity: $enumDecode(_$GiftRarityEnumMap, json['rarity']),
   $type: json['runtimeType'] as String?,
@@ -37,6 +38,7 @@ CoinGift _$CoinGiftFromJson(Map<String, dynamic> json) => CoinGift(
 
 Map<String, dynamic> _$CoinGiftToJson(CoinGift instance) => <String, dynamic>{
   'name': instance.name,
+  'imagePath': instance.imagePath,
   'value': instance.value,
   'rarity': _$GiftRarityEnumMap[instance.rarity]!,
   'runtimeType': instance.$type,

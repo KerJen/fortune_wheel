@@ -19,6 +19,7 @@ import 'package:fortune/data/source/local/gift_local_source.dart' as _i983;
 import 'package:fortune/data/source/local/wheel_local_source.dart' as _i367;
 import 'package:fortune/data/source/network/random_network_source.dart'
     as _i210;
+import 'package:fortune/view/main/balance/cubit/cubit.dart' as _i987;
 import 'package:fortune/view/main/inventory/cubit/cubit.dart' as _i212;
 import 'package:fortune/view/main/wheel/cubit/cubit.dart' as _i319;
 import 'package:get_it/get_it.dart' as _i174;
@@ -63,6 +64,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i78.RandomRepository>(
       () => _i78.RandomRepositoryImpl(gh<_i210.RandomNetworkSource>()),
+    );
+    gh.factory<_i987.BalanceCubit>(
+      () => _i987.BalanceCubit(gh<_i551.BalanceRepository>()),
     );
     gh.factory<_i319.WheelCubit>(
       () => _i319.WheelCubit(

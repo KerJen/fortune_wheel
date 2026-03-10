@@ -9,19 +9,20 @@ import '../../model/inventory_item/inventory_item.dart';
 
 abstract class GiftLocalSource {
   static const wheelGifts = <Gift>[
-    Gift.regular(name: 'Букет клевый крутой', rarity: GiftRarity.rare),
-    Gift.regular(name: 'Цветочек', rarity: GiftRarity.common),
-    Gift.regular(name: 'Духи', rarity: GiftRarity.epic),
-    Gift.regular(name: 'Коробка конфет', rarity: GiftRarity.common),
-    Gift.regular(name: 'Носок', rarity: GiftRarity.common),
-    Gift.regular(name: 'Машина', rarity: GiftRarity.legendary),
-    Gift.regular(name: 'Поцелуйчик', rarity: GiftRarity.rare),
-    Gift.coin(name: '50 сердечек', value: 50, rarity: GiftRarity.epic),
+    Gift.regular(name: 'Букет клевый крутой', imagePath: 'assets/images/icon.png', rarity: GiftRarity.rare),
+    Gift.regular(name: 'Цветочек', imagePath: 'assets/images/icon.png', rarity: GiftRarity.common),
+    Gift.regular(name: 'Духи', imagePath: 'assets/images/icon.png', rarity: GiftRarity.epic),
+    Gift.regular(name: 'Коробка конфет', imagePath: 'assets/images/icon.png', rarity: GiftRarity.common),
+    Gift.regular(name: 'Носок', imagePath: 'assets/images/icon.png', rarity: GiftRarity.common),
+    Gift.regular(name: 'Машина', imagePath: 'assets/images/icon.png', rarity: GiftRarity.legendary),
+    Gift.regular(name: 'Поцелуйчик', imagePath: 'assets/images/icon.png', rarity: GiftRarity.rare),
+    Gift.coin(name: '50 сердечек', imagePath: 'assets/images/icon.png', value: 50, rarity: GiftRarity.epic),
   ];
 
   List<InventoryItem> getInventory();
   Stream<List<InventoryItem>> watchInventory();
   Future<void> addGift(Gift gift);
+  Future<void> clearInventory();
 }
 
 @Singleton(as: GiftLocalSource)
@@ -58,6 +59,12 @@ class GiftLocalSourceImpl implements GiftLocalSource {
     }
     await _saveInventory(inventory);
     _controller.add(inventory);
+  }
+
+  @override
+  Future<void> clearInventory() async {
+    await _prefs.remove(_inventoryKey);
+    _controller.add([]);
   }
 
   Future<void> _saveInventory(List<InventoryItem> inventory) async {

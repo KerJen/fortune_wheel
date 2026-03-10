@@ -1,8 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../../data/exception/network_exception.dart';
 import '../../../../data/model/gift/gift.dart';
 import '../../../../data/repository/balance_repository.dart';
 import '../../../../data/repository/gift_repository.dart';
@@ -16,7 +15,6 @@ class WheelCubit extends Cubit<WheelState> {
   final BalanceRepository _balanceRepository;
   final WheelLocalSource _wheelLocalSource;
   final RandomRepository _randomRepository;
-  StreamSubscription? _balanceSubscription;
 
   static const spinCost = 10;
 
@@ -27,50 +25,46 @@ class WheelCubit extends Cubit<WheelState> {
     this._balanceRepository,
     this._wheelLocalSource,
     this._randomRepository,
-  ) : super(WheelState.idle(balance: 0)) {
+  ) : super(const WheelState.idle()) {
     _init();
   }
 
   void _init() {
-    final balance = _balanceRepository.getBalance();
     final savedDegrees = _wheelLocalSource.getSavedDegrees();
-
-    emit(WheelState.idle(balance: balance, savedDegrees: savedDegrees));
-
-    _balanceSubscription = _balanceRepository.watchBalance().listen((balance) {
-      emit(
-        switch (state) {
-          WheelIdle(:final savedDegrees) => WheelState.idle(balance: balance, savedDegrees: savedDegrees),
-          WheelSpinning() => WheelState.spinning(balance: balance),
-          WheelLanding(:final targetGift) => WheelState.landing(balance: balance, targetGift: targetGift),
-          WheelStopped(:final wonGift) => WheelState.stopped(balance: balance, wonGift: wonGift),
-        },
-      );
-    });
+    emit(WheelState.idle(savedDegrees: savedDegrees));
   }
 
   Future<void> spin() async {
     if (state is WheelSpinning || state is WheelLanding) return;
+
     final success = await _balanceRepository.spendCoins(spinCost);
-    if (!success) return;
+    if (!success) {
+      _emitFailure('Недостаточно монет для вращения');
+      return;
+    }
 
-    emit(WheelState.spinning(balance: _balanceRepository.getBalance()));
+    emit(const WheelState.spinning());
 
-    final gifts = _giftRepository.getWheelGifts();
-    final totalWeight = gifts.fold<int>(0, (sum, g) => sum + g.rarity.weight);
+    try {
+      final gifts = _giftRepository.getWheelGifts();
+      final totalWeight = gifts.fold<int>(0, (sum, g) => sum + g.rarity.weight);
 
-    final randomValue = await _randomRepository.getRandomNumber(totalWeight);
+      final randomValue = await _randomRepository.getRandomNumber(totalWeight);
 
-    if (isClosed || state is! WheelSpinning) return;
+      if (isClosed || state is! WheelSpinning) return;
 
-    final targetGift = gifts[_selectByWeight(gifts, randomValue)];
+      final targetGift = gifts[_selectByWeight(gifts, randomValue)];
 
-    emit(
-      WheelState.landing(
-        balance: _balanceRepository.getBalance(),
-        targetGift: targetGift,
-      ),
-    );
+      emit(WheelState.landing(targetGift: targetGift));
+    } on NetworkException {
+      await _balanceRepository.addCoins(spinCost);
+      if (isClosed) return;
+      _emitFailure('Нет связи с сервером. Монеты возвращены');
+    } catch (_) {
+      await _balanceRepository.addCoins(spinCost);
+      if (isClosed) return;
+      _emitFailure('Ошибка при вращении. Монеты возвращены');
+    }
   }
 
   int _selectByWeight(List<Gift> gifts, int randomValue) {
@@ -88,20 +82,31 @@ class WheelCubit extends Cubit<WheelState> {
 
     final wonGift = currentState.targetGift;
 
-    emit(
-      WheelState.stopped(
-        balance: _balanceRepository.getBalance(),
-        wonGift: wonGift,
-      ),
-    );
+    emit(WheelState.stopped(wonGift: wonGift));
 
-    await _giftRepository.claimGift(wonGift);
-    await _wheelLocalSource.saveState(degrees, wonGift);
+    try {
+      await _giftRepository.claimGift(wonGift);
+      await _wheelLocalSource.saveState(degrees, wonGift);
+    } catch (_) {
+      emit(
+        const WheelState.failure(
+          message: 'Не удалось сохранить подарок',
+        ),
+      );
+      return;
+    }
+
+    if (isClosed) return;
+    emit(WheelState.idle(savedDegrees: degrees));
   }
 
-  @override
-  Future<void> close() {
-    _balanceSubscription?.cancel();
-    return super.close();
+  Future<void> resetBalance() async {
+    await _balanceRepository.resetBalance();
+  }
+
+  void _emitFailure(String message) {
+    final savedDegrees = _wheelLocalSource.getSavedDegrees();
+    emit(WheelState.failure(message: message));
+    emit(WheelState.idle(savedDegrees: savedDegrees));
   }
 }

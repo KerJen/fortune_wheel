@@ -16,7 +16,7 @@ class RandomNetworkSourceImpl implements RandomNetworkSource {
   @override
   Future<int> getRandomNumber(int max) async {
     final uri = Uri.parse(
-      'https://www.randomnumberapi.com/api/v1/random?min=0&max=$max&count=1',
+      'https://www.randomnumberapi.com/api/v1.0/random?min=0&max=$max&count=1',
     );
     final response = await _client.get(uri).timeout(const Duration(seconds: 5));
     if (response.statusCode != 200) throw Exception('API error: ${response.statusCode}');
