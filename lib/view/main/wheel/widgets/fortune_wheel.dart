@@ -1,12 +1,11 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../data/model/gift/gift.dart';
 import '../../../colors.dart';
-import '../cubit/cubit.dart';
-import '../cubit/state.dart';
 
 const _rimColor = Color(0xFFFFDA9A);
 const _pegRadius = 5.0;
@@ -23,8 +22,35 @@ const _wheelColors = [
   Color(0xFFC9FFE5),
 ];
 
+class FortuneWheelController {
+  _FortuneWheelState? _state;
+
+  VoidCallback? onSpin;
+  void Function(double degrees)? onSpinComplete;
+
+  void startFreeSpin() {
+    _state?._startFreeSpin();
+  }
+
+  void spinTo(Gift gift, double velocity) {
+    _state?._spinTo(gift, velocity);
+  }
+
+  void _attach(_FortuneWheelState state) => _state = state;
+  void _detach() => _state = null;
+}
+
 class FortuneWheel extends StatefulWidget {
-  const FortuneWheel({super.key});
+  final List<Gift> gifts;
+  final FortuneWheelController controller;
+  final double initialAngle;
+
+  const FortuneWheel({
+    super.key,
+    required this.gifts,
+    required this.controller,
+    this.initialAngle = 0,
+  });
 
   @override
   State<FortuneWheel> createState() => _FortuneWheelState();
@@ -37,7 +63,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
 
   late final Ticker _physicsTicker;
 
-  double _wheelAngle = 0;
+  late double _wheelAngle = widget.initialAngle;
   double _previousAngle = 0;
   bool _isSpinning = false;
   bool _flowerReversed = false;
@@ -48,13 +74,17 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
   double _prevWheelAngle = 0;
   Duration _lastTickTime = Duration.zero;
 
-  static const _gravity = 40.0;
-  static const _damping = 6.0;
+  static const _arrowGravity = 40.0;
+  static const _arrowDamping = 6.0;
   static const _maxArrowAngle = 0.4;
+  static const _minFlingSpeed = 200.0;
+  static const _freeSpinRevolutions = 100;
+  static const _freeSpinDuration = Duration(seconds: 50);
 
   @override
   void initState() {
     super.initState();
+    widget.controller._attach(this);
     _flowerController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 6),
@@ -63,7 +93,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
       vsync: this,
       lowerBound: double.negativeInfinity,
       upperBound: double.infinity,
-      value: 0,
+      value: widget.initialAngle,
     );
     _spinController.addListener(() {
       setState(() {
@@ -81,7 +111,17 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
   }
 
   @override
+  void didUpdateWidget(FortuneWheel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller._detach();
+      widget.controller._attach(this);
+    }
+  }
+
+  @override
   void dispose() {
+    widget.controller._detach();
     _physicsTicker.dispose();
     _flowerController.dispose();
     _spinController.dispose();
@@ -106,7 +146,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
       _arrowAngle += (target - _arrowAngle) * (1 - exp(-15 * dt));
       _arrowVelocity = 0;
     } else {
-      _arrowVelocity += (-_gravity * sin(_arrowAngle) - _damping * _arrowVelocity) * dt;
+      _arrowVelocity += (-_arrowGravity * sin(_arrowAngle) - _arrowDamping * _arrowVelocity) * dt;
       _arrowAngle += _arrowVelocity * dt;
     }
 
@@ -156,97 +196,121 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
 
     final v = details.velocity.pixelsPerSecond;
     final speed = v.distance;
-    if (speed < 200) return;
+    if (speed < _minFlingSpeed) return;
 
     final r = _lastPosition - _widgetSize.center(Offset.zero);
     _spinDirection = (r.dx * v.dy - r.dy * v.dx) >= 0 ? 1 : -1;
-    _lastVelocity = speed;
-    context.read<WheelCubit>().spin();
+    widget.controller.onSpin?.call();
   }
 
-  double _lastVelocity = 0;
   Offset _lastPosition = Offset.zero;
   int _spinDirection = 1;
 
-  void _spinTo(double targetDegrees, double velocity) {
+  void _startFreeSpin() {
     _isSpinning = true;
     _petalScaleController.animateTo(1.0 / 1.5, curve: Curves.easeOutCubic);
     _flowerReversed = true;
 
-    final targetRadians = targetDegrees * pi / 180;
+    final direction = _spinDirection;
+    final target = _wheelAngle + direction * _freeSpinRevolutions * 2 * pi;
+    _spinController.animateTo(
+      target,
+      duration: _freeSpinDuration,
+      curve: Curves.linear,
+    );
+  }
+
+  static const _sectorPadding = 0.15;
+  static const _easeOutCubicDerivativeAtZero = 3.0;
+  static const _minLandingExtraSpins = 3;
+
+  void _spinTo(Gift gift, double velocity) {
+    final freeSpinSpeed = _freeSpinRevolutions * 2 * pi / _freeSpinDuration.inMilliseconds * 1000;
+
+    _spinController.stop();
+    _isSpinning = true;
+
+    final giftIndex = widget.gifts.indexOf(gift);
+    final segmentCount = widget.gifts.length;
+    final segmentAngle = 2 * pi / segmentCount;
+    final paddedRange = segmentAngle * (1 - 2 * _sectorPadding);
+    final randomOffset = _sectorPadding * segmentAngle + Random().nextDouble() * paddedRange;
+    final targetRadians = -(giftIndex * segmentAngle + randomOffset);
+
     final direction = _spinDirection;
 
     final currentNormalized = ((_wheelAngle % (2 * pi)) + 2 * pi) % (2 * pi);
-    var offsetToTarget = targetRadians - currentNormalized;
+    final targetNormalized = ((targetRadians % (2 * pi)) + 2 * pi) % (2 * pi);
+    var offsetToTarget = targetNormalized - currentNormalized;
     if (direction >= 0) {
       if (offsetToTarget < 0) offsetToTarget += 2 * pi;
     } else {
       if (offsetToTarget > 0) offsetToTarget -= 2 * pi;
     }
 
-    final extraSpins = (3 + (velocity / 1000).clamp(0, 5)).toInt();
-    final targetAngle = _wheelAngle + direction * extraSpins * 2 * pi + offsetToTarget;
+    final totalDistance = direction * _minLandingExtraSpins * 2 * pi + offsetToTarget;
+    final durationSeconds = totalDistance.abs() * _easeOutCubicDerivativeAtZero / freeSpinSpeed;
+    final durationMs = (durationSeconds * 1000).round().clamp(2000, 10000);
 
-    final duration = Duration(milliseconds: (3000 + (velocity * 2).clamp(0, 3000)).toInt());
+    final targetAngle = _wheelAngle + totalDistance;
 
     _spinController
         .animateTo(
           targetAngle,
-          duration: duration,
+          duration: Duration(milliseconds: durationMs),
           curve: Curves.easeOutCubic,
         )
         .then((_) {
           _isSpinning = false;
           _petalScaleController.animateTo(1.0, curve: Curves.easeOutCubic);
-          context.read<WheelCubit>().onSpinComplete();
+          final normalizedDegrees = ((_wheelAngle % (2 * pi)) + 2 * pi) % (2 * pi) * 180 / pi;
+          widget.controller.onSpinComplete?.call(normalizedDegrees);
         });
   }
 
   @override
   Widget build(BuildContext context) {
+    final labels = widget.gifts.map((g) => g.name).toList();
+
     return AspectRatio(
       aspectRatio: 1,
       child: LayoutBuilder(
         builder: (context, constraints) {
           _widgetSize = Size(constraints.maxWidth, constraints.maxHeight);
-          return BlocListener<WheelCubit, WheelState>(
-            listener: (context, state) {
-              if (state is WheelSpinning) {
-                _spinTo(state.targetDegrees, _lastVelocity);
-              }
-            },
-            child: GestureDetector(
-              onPanStart: _panStart,
-              onPanUpdate: _panUpdate,
-              onPanEnd: _panEnd,
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_flowerController, _petalScaleController]),
-                builder: (context, child) {
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned.fill(
-                        child: Transform.rotate(
-                          angle: _wheelAngle,
-                          child: CustomPaint(
-                            painter: _WheelPainter(colors: _wheelColors),
-                            foregroundPainter: _FlowerPainter(
-                              progress: _flowerController.value,
-                              petalScale: _petalScaleController.value,
-                              reversed: _flowerReversed,
-                            ),
+          return GestureDetector(
+            onPanStart: _panStart,
+            onPanUpdate: _panUpdate,
+            onPanEnd: _panEnd,
+            child: AnimatedBuilder(
+              animation: Listenable.merge([_flowerController, _petalScaleController]),
+              builder: (context, child) {
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned.fill(
+                      child: Transform.rotate(
+                        angle: _wheelAngle,
+                        child: CustomPaint(
+                          painter: _WheelPainter(
+                            colors: _wheelColors,
+                            labels: labels,
+                          ),
+                          foregroundPainter: _FlowerPainter(
+                            progress: _flowerController.value,
+                            petalScale: _petalScaleController.value,
+                            reversed: _flowerReversed,
                           ),
                         ),
                       ),
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: _ArrowPainter(tiltAngle: _arrowAngle),
-                        ),
+                    ),
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _ArrowPainter(tiltAngle: _arrowAngle),
                       ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                  ],
+                );
+              },
             ),
           );
         },
@@ -257,13 +321,14 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
 
 class _WheelPainter extends CustomPainter {
   final List<Color> colors;
+  final List<String> labels;
   final double rimWidth;
 
   static const _shadowBlur = 5.0;
   static const _shadowSpread = 10.0;
   static final _shadowColor = Colors.black.withValues(alpha: 0.2);
 
-  _WheelPainter({required this.colors, this.rimWidth = 16});
+  _WheelPainter({required this.colors, required this.labels, this.rimWidth = 16});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -295,6 +360,25 @@ class _WheelPainter extends CustomPainter {
     for (var i = 0; i < sectorCount; i++) {
       final startAngle = i * sweepAngle - pi / 2;
       canvas.drawArc(sectorRect, startAngle, sweepAngle, true, sectorStrokePaint);
+    }
+
+    for (var i = 0; i < sectorCount && i < labels.length; i++) {
+      final midAngle = i * sweepAngle - pi / 2 + sweepAngle / 2;
+      final textRadius = sectorRadius * 0.6;
+
+      canvas.save();
+      canvas.translate(
+        center.dx + textRadius * cos(midAngle),
+        center.dy + textRadius * sin(midAngle),
+      );
+      canvas.rotate(midAngle + pi / 2);
+
+      final paragraph = _buildParagraph(labels[i], sectorRadius * 0.45);
+      canvas.drawParagraph(
+        paragraph,
+        Offset(-paragraph.maxIntrinsicWidth / 2, -paragraph.height / 2),
+      );
+      canvas.restore();
     }
 
     canvas.save();
@@ -335,8 +419,30 @@ class _WheelPainter extends CustomPainter {
     }
   }
 
+  ui.Paragraph _buildParagraph(String text, double maxWidth) {
+    final builder =
+        ui.ParagraphBuilder(
+            ui.ParagraphStyle(
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              ellipsis: '…',
+            ),
+          )
+          ..pushStyle(
+            ui.TextStyle(
+              color: bg,
+              fontSize: 9,
+              fontFamily: 'Rubik',
+              fontWeight: FontWeight.w600,
+            ),
+          )
+          ..addText(text);
+    return builder.build()..layout(ui.ParagraphConstraints(width: maxWidth));
+  }
+
   @override
-  bool shouldRepaint(covariant _WheelPainter oldDelegate) => oldDelegate.colors != colors || oldDelegate.rimWidth != rimWidth;
+  bool shouldRepaint(covariant _WheelPainter oldDelegate) =>
+      oldDelegate.colors != colors || oldDelegate.labels != labels || oldDelegate.rimWidth != rimWidth;
 }
 
 class _FlowerPainter extends CustomPainter {

@@ -20,14 +20,19 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  static const _screens = [WheelScreen(), InventoryScreen(), CreditsScreen()];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
       extendBody: true,
-      body: _screens[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          const WheelScreen(),
+          InventoryScreen(key: UniqueKey()),
+          CreditsScreen(key: UniqueKey()),
+        ],
+      ),
       bottomNavigationBar: SafeArea(
         child: _BottomBar(
           currentIndex: _currentIndex,

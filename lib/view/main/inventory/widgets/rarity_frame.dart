@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import '../../../../data/model/gift.dart';
+import '../../../../data/model/gift/gift.dart';
 import '../../../colors.dart';
 
 sealed class RarityConfig {
