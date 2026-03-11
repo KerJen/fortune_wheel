@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../data/exception/network_exception.dart';
 import '../../../../data/model/gift/gift.dart';
+
 import '../../../../data/repository/balance_repository.dart';
 import '../../../../data/repository/gift_repository.dart';
 import '../../../../data/repository/random_repository.dart';
@@ -38,17 +39,13 @@ class WheelCubit extends Cubit<WheelState> {
     if (state is WheelSpinning || state is WheelLanding) return;
 
     final success = await _balanceRepository.spendCoins(spinCost);
-    if (!success) {
-      _emitFailure('Недостаточно монет для вращения');
-      return;
-    }
+    if (!success) return _emitFailure(WheelError.notEnoughCoins);
 
     emit(const WheelState.spinning());
 
     try {
       final gifts = _giftRepository.getWheelGifts();
       final totalWeight = gifts.fold<int>(0, (sum, g) => sum + g.rarity.weight);
-
       final randomValue = await _randomRepository.getRandomNumber(totalWeight);
 
       if (isClosed || state is! WheelSpinning) return;
@@ -56,14 +53,18 @@ class WheelCubit extends Cubit<WheelState> {
       final targetGift = gifts[_selectByWeight(gifts, randomValue)];
 
       emit(WheelState.landing(targetGift: targetGift));
+    } on TooManyRequestsException {
+      await _balanceRepository.addCoins(spinCost);
+      if (isClosed) return;
+      _emitFailure(WheelError.tooManyRequests);
     } on NetworkException {
       await _balanceRepository.addCoins(spinCost);
       if (isClosed) return;
-      _emitFailure('Нет связи с сервером. Монеты возвращены');
+      _emitFailure(WheelError.noConnection);
     } catch (_) {
       await _balanceRepository.addCoins(spinCost);
       if (isClosed) return;
-      _emitFailure('Ошибка при вращении. Монеты возвращены');
+      _emitFailure(WheelError.spinError);
     }
   }
 
@@ -90,7 +91,7 @@ class WheelCubit extends Cubit<WheelState> {
     } catch (_) {
       emit(
         const WheelState.failure(
-          message: 'Не удалось сохранить подарок',
+          error: WheelError.saveGiftError,
         ),
       );
       return;
@@ -104,9 +105,9 @@ class WheelCubit extends Cubit<WheelState> {
     await _balanceRepository.resetBalance();
   }
 
-  void _emitFailure(String message) {
+  void _emitFailure(WheelError error) {
     final savedDegrees = _wheelLocalSource.getSavedDegrees();
-    emit(WheelState.failure(message: message));
+    emit(WheelState.failure(error: error));
     emit(WheelState.idle(savedDegrees: savedDegrees));
   }
 }

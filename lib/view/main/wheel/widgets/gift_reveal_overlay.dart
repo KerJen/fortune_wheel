@@ -4,22 +4,14 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
-import 'package:fortune/view/dimens.dart';
-import '../../../../data/model/gift/gift.dart';
-import '../../../colors.dart';
-import '../../../common/gift_image.dart';
-import '../../inventory/widgets/rarity_frame.dart';
 
-const _confettiColors = [
-  Color(0xFFFFB3BA),
-  Color(0xFFFFDFBA),
-  Color(0xFFFFFBBA),
-  Color(0xFFBAFFC9),
-  Color(0xFFBAE1FF),
-  Color(0xFFD5BAFF),
-  Color(0xFFFFBAE1),
-  Color(0xFFC9FFE5),
-];
+import '../../../../data/model/gift/gift.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/gift_l10n.dart';
+import '../../../dimens.dart';
+import '../../widgets/gift_image.dart';
+import '../../inventory/widgets/rarity_frame.dart';
+import 'confetti_layer.dart';
 
 class GiftRevealOverlay extends StatefulWidget {
   final Gift wonGift;
@@ -35,18 +27,17 @@ class GiftRevealOverlay extends StatefulWidget {
   State<GiftRevealOverlay> createState() => _GiftRevealOverlayState();
 }
 
-class _GiftRevealOverlayState extends State<GiftRevealOverlay> with TickerProviderStateMixin {
+class _GiftRevealOverlayState extends State<GiftRevealOverlay> with SingleTickerProviderStateMixin {
   late final AnimationController _fadeController;
-  late final AnimationController _scaleController;
-  late final Animation<double> _scaleAnimation;
+  late final bool _hasCelebration = widget.wonGift.rarity != GiftRarity.common;
 
-  final _leftCannonController = ConfettiController(duration: const Duration(milliseconds: 100));
-  final _rightCannonController = ConfettiController(duration: const Duration(milliseconds: 100));
-  final _rainLeftController = ConfettiController(duration: const Duration(seconds: 3));
-  final _rainCenterController = ConfettiController(duration: const Duration(seconds: 3));
-  final _rainRightController = ConfettiController(duration: const Duration(seconds: 3));
+  late final ConfettiController? _leftCannonController;
+  late final ConfettiController? _rightCannonController;
+  late final ConfettiController? _rainLeftController;
+  late final ConfettiController? _rainCenterController;
+  late final ConfettiController? _rainRightController;
 
-  late final Future<AudioSource> _bangSource = SoLoud.instance.loadAsset('assets/sounds/bang.mp3');
+  Future<AudioSource>? _bangSource;
   late final Future<AudioSource> _winSource = SoLoud.instance.loadAsset(widget.wonGift.rarity.soundAsset);
 
   bool _dismissing = false;
@@ -60,37 +51,38 @@ class _GiftRevealOverlayState extends State<GiftRevealOverlay> with TickerProvid
       duration: const Duration(milliseconds: 300),
     );
 
-    _scaleController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-
-    _scaleAnimation = CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    );
+    if (_hasCelebration) {
+      _leftCannonController = ConfettiController(duration: const Duration(milliseconds: 100));
+      _rightCannonController = ConfettiController(duration: const Duration(milliseconds: 100));
+      _rainLeftController = ConfettiController(duration: const Duration(seconds: 3));
+      _rainCenterController = ConfettiController(duration: const Duration(seconds: 3));
+      _rainRightController = ConfettiController(duration: const Duration(seconds: 3));
+      _bangSource = SoLoud.instance.loadAsset('assets/sounds/bang.mp3');
+    } else {
+      _leftCannonController = null;
+      _rightCannonController = null;
+      _rainLeftController = null;
+      _rainCenterController = null;
+      _rainRightController = null;
+    }
 
     _fadeController.forward();
-    Future.delayed(const Duration(milliseconds: 150), () {
-      if (!mounted) return;
-      _scaleController.forward();
-    });
 
-    if (widget.wonGift.rarity != GiftRarity.common) {
+    if (_hasCelebration) {
       _playCelebration();
     } else {
-      _winSource.then((source) => SoLoud.instance.play(source));
+      _winSource.then(SoLoud.instance.play);
     }
   }
 
   void _playCelebration() {
-    _bangSource.then((source) => SoLoud.instance.play(source));
-    _winSource.then((source) => SoLoud.instance.play(source));
-    _leftCannonController.play();
-    _rightCannonController.play();
-    _rainLeftController.play();
-    _rainCenterController.play();
-    _rainRightController.play();
+    _bangSource?.then(SoLoud.instance.play);
+    _winSource.then(SoLoud.instance.play);
+    _leftCannonController?.play();
+    _rightCannonController?.play();
+    _rainLeftController?.play();
+    _rainCenterController?.play();
+    _rainRightController?.play();
   }
 
   Future<void> _onCollect() async {
@@ -104,14 +96,13 @@ class _GiftRevealOverlayState extends State<GiftRevealOverlay> with TickerProvid
   @override
   void dispose() {
     _fadeController.dispose();
-    _scaleController.dispose();
-    _leftCannonController.dispose();
-    _rightCannonController.dispose();
-    _rainLeftController.dispose();
-    _rainCenterController.dispose();
-    _rainRightController.dispose();
-    _bangSource.then((source) => SoLoud.instance.disposeSource(source));
-    _winSource.then((source) => SoLoud.instance.disposeSource(source));
+    _leftCannonController?.dispose();
+    _rightCannonController?.dispose();
+    _rainLeftController?.dispose();
+    _rainCenterController?.dispose();
+    _rainRightController?.dispose();
+    _bangSource?.then(SoLoud.instance.disposeSource);
+    _winSource.then(SoLoud.instance.disposeSource);
     super.dispose();
   }
 
@@ -128,69 +119,76 @@ class _GiftRevealOverlayState extends State<GiftRevealOverlay> with TickerProvid
           child: Stack(
             children: [
               Container(color: Colors.black87),
-              _ConfettiLayer(
-                leftCannon: _leftCannonController,
-                rightCannon: _rightCannonController,
-                rainLeft: _rainLeftController,
-                rainCenter: _rainCenterController,
-                rainRight: _rainRightController,
-              ),
-              Center(
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 280,
-                        height: 280,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            if (widget.wonGift.rarity != GiftRarity.common) ...[
-                              CustomPaint(
-                                size: const Size(280, 280),
-                                painter: _RaysPainter(
-                                  color: rarityColor,
-                                  rayCount: 14,
-                                  opacity: 0.25,
-                                ),
-                              ).animate(onPlay: (c) => c.repeat()).rotate(duration: const Duration(seconds: 16)),
-                              CustomPaint(
-                                    size: const Size(260, 260),
-                                    painter: _RaysPainter(
-                                      color: rarityColor,
-                                      rayCount: 10,
-                                      opacity: 0.4,
-                                    ),
-                                  )
-                                  .animate(onPlay: (c) => c.repeat())
-                                  .rotate(
-                                    begin: 0,
-                                    end: -1,
-                                    duration: const Duration(seconds: 10),
-                                  ),
-                            ],
-                            RarityFrame(
-                              rarity: widget.wonGift.rarity,
-                              borderRadius: 20,
-                              child: _GiftDisplay(gift: widget.wonGift),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: spacing15),
-                      _GiftName(name: widget.wonGift.name),
-                      const SizedBox(height: 4),
-                      _RarityLabel(
-                        rarity: widget.wonGift.rarity,
-                        color: rarityColor,
-                      ),
-                      const SizedBox(height: spacing25),
-                      _CollectButton(onPressed: _onCollect),
-                    ],
+              if (_hasCelebration)
+                RepaintBoundary(
+                  child: ConfettiLayer(
+                    leftCannon: _leftCannonController!,
+                    rightCannon: _rightCannonController!,
+                    rainLeft: _rainLeftController!,
+                    rainCenter: _rainCenterController!,
+                    rainRight: _rainRightController!,
                   ),
                 ),
+              Center(
+                child:
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 280,
+                          height: 280,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              if (widget.wonGift.rarity != GiftRarity.common) ...[
+                                CustomPaint(
+                                  size: const Size(280, 280),
+                                  painter: _RaysPainter(
+                                    color: rarityColor,
+                                    rayCount: 14,
+                                    opacity: 0.25,
+                                  ),
+                                ).animate(onPlay: (c) => c.repeat()).rotate(duration: const Duration(seconds: 16)),
+                                CustomPaint(
+                                      size: const Size(260, 260),
+                                      painter: _RaysPainter(
+                                        color: rarityColor,
+                                        rayCount: 10,
+                                        opacity: 0.4,
+                                      ),
+                                    )
+                                    .animate(onPlay: (c) => c.repeat())
+                                    .rotate(
+                                      begin: 0,
+                                      end: -1,
+                                      duration: const Duration(seconds: 10),
+                                    ),
+                              ],
+                              RarityFrame(
+                                rarity: widget.wonGift.rarity,
+                                borderRadius: 20,
+                                child: _GiftDisplay(gift: widget.wonGift),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: spacing15),
+                        _GiftName(name: widget.wonGift.localizedName(context)),
+                        const SizedBox(height: 4),
+                        _RarityLabel(
+                          rarity: widget.wonGift.rarity,
+                          color: rarityColor,
+                        ),
+                        const SizedBox(height: spacing25),
+                        _CollectButton(onPressed: _onCollect, color: rarityColor),
+                      ],
+                    ).animate().scale(
+                      begin: const Offset(0, 0),
+                      end: const Offset(1, 1),
+                      duration: 600.ms,
+                      curve: Curves.elasticOut,
+                      delay: 150.ms,
+                    ),
               ),
             ],
           ),
@@ -217,7 +215,7 @@ class _RaysPainter extends CustomPainter {
     final radius = size.width * 0.9;
     final sectorAngle = 2 * pi / rayCount;
 
-    for (int i = 0; i < rayCount; i++) {
+    for (var i = 0; i < rayCount; i++) {
       final startAngle = i * sectorAngle;
       final endAngle = startAngle + sectorAngle;
       final alpha = i.isEven ? opacity : opacity * 0.4;
@@ -257,20 +255,39 @@ class _GiftDisplay extends StatelessWidget {
 
   const _GiftDisplay({required this.gift});
 
+  List<Color> _shimmerColors(Color base) {
+    final dark = Color.lerp(base, Colors.black, 0.3)!;
+    final mid = base;
+    final light = Color.lerp(base, Colors.white, 0.6)!;
+    return [dark, mid, light, mid, dark];
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: GiftImage(
-        gift: gift,
-        size: 120,
-        borderRadius: 20,
-      ),
+    final rarityColor = RarityConfig.from(gift.rarity).color;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Color.lerp(rarityColor, Colors.white, 0.7),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            )
+            .animate(onPlay: (c) => c.repeat())
+            .shimmer(
+              duration: 2500.ms,
+              colors: _shimmerColors(rarityColor),
+            ),
+        GiftImage(
+          gift: gift,
+          size: 120,
+          borderRadius: 20,
+        ),
+      ],
     );
   }
 }
@@ -313,134 +330,34 @@ class _RarityLabel extends StatelessWidget {
 
 class _CollectButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final Color color;
 
-  const _CollectButton({required this.onPressed});
+  const _CollectButton({required this.onPressed, required this.color});
 
   @override
   Widget build(BuildContext context) {
+    final light = Color.lerp(color, Colors.white, 0.3)!;
+    final dark = Color.lerp(color, Colors.black, 0.2)!;
+
     return SizedBox(
       width: 200,
       height: 50,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(colors: [primary, secondary]),
+          gradient: LinearGradient(colors: [dark, light]),
         ),
         child: MaterialButton(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           onPressed: onPressed,
           child: Text(
-            'Получить',
+            S.of(context).collect,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: bg,
+              color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ConfettiLayer extends StatelessWidget {
-  final ConfettiController leftCannon;
-  final ConfettiController rightCannon;
-  final ConfettiController rainLeft;
-  final ConfettiController rainCenter;
-  final ConfettiController rainRight;
-
-  const _ConfettiLayer({
-    required this.leftCannon,
-    required this.rightCannon,
-    required this.rainLeft,
-    required this.rainCenter,
-    required this.rainRight,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Stack(
-        children: [
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: ConfettiWidget(
-              confettiController: leftCannon,
-              blastDirection: -7 * pi / 18,
-              emissionFrequency: 0.02,
-              numberOfParticles: 50,
-              maxBlastForce: 120,
-              minBlastForce: 80,
-              gravity: 0.15,
-              minimumSize: const Size(5, 5),
-              maximumSize: const Size(10, 10),
-              colors: _confettiColors,
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: ConfettiWidget(
-              confettiController: rightCannon,
-              blastDirection: -11 * pi / 18,
-              emissionFrequency: 0.02,
-              numberOfParticles: 50,
-              maxBlastForce: 120,
-              minBlastForce: 80,
-              gravity: 0.15,
-              minimumSize: const Size(5, 5),
-              maximumSize: const Size(10, 10),
-              colors: _confettiColors,
-            ),
-          ),
-          Align(
-            alignment: Alignment.topLeft,
-            child: ConfettiWidget(
-              confettiController: rainLeft,
-              blastDirection: pi / 2,
-              emissionFrequency: 0.15,
-              numberOfParticles: 3,
-              maxBlastForce: 5,
-              minBlastForce: 2,
-              gravity: 0.05,
-              minimumSize: const Size(3, 3),
-              maximumSize: const Size(6, 6),
-              blastDirectionality: BlastDirectionality.directional,
-              colors: _confettiColors,
-            ),
-          ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: rainCenter,
-              blastDirection: pi / 2,
-              emissionFrequency: 0.15,
-              numberOfParticles: 3,
-              maxBlastForce: 5,
-              minBlastForce: 2,
-              gravity: 0.05,
-              minimumSize: const Size(3, 3),
-              maximumSize: const Size(6, 6),
-              blastDirectionality: BlastDirectionality.directional,
-              colors: _confettiColors,
-            ),
-          ),
-          Align(
-            alignment: Alignment.topRight,
-            child: ConfettiWidget(
-              confettiController: rainRight,
-              blastDirection: pi / 2,
-              emissionFrequency: 0.15,
-              numberOfParticles: 3,
-              maxBlastForce: 5,
-              minBlastForce: 2,
-              gravity: 0.05,
-              minimumSize: const Size(3, 3),
-              maximumSize: const Size(6, 6),
-              blastDirectionality: BlastDirectionality.directional,
-              colors: _confettiColors,
-            ),
-          ),
-        ],
       ),
     );
   }

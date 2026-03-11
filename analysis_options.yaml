@@ -2,3 +2,60 @@ include: package:flutter_lints/flutter.yaml
 
 formatter:
   trailing_commas: preserve
+
+analyzer:
+  errors:
+    invalid_annotation_target: ignore
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.inject.dart"
+    - "**/*.config.dart"
+
+linter:
+  rules:
+    # Style
+    prefer_single_quotes: true
+    require_trailing_commas: true
+    sort_child_properties_last: true
+    sized_box_for_whitespace: true
+    use_colored_box: true
+    use_decorated_box: true
+    unnecessary_lambdas: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+
+    # Safety
+    avoid_print: true
+    avoid_relative_lib_imports: true
+    cancel_subscriptions: true
+    close_sinks: true
+    always_use_package_imports: false
+    prefer_relative_imports: true
+    unawaited_futures: true
+
+    # Unnecessary code
+    unnecessary_await_in_return: true
+    unnecessary_parenthesis: true
+    unnecessary_string_interpolations: true
+    unnecessary_to_list_in_spreads: true
+    unnecessary_null_checks: true
+    unnecessary_null_in_if_null_operators: true
+    no_leading_underscores_for_local_identifiers: true
+    cascade_invocations: true
+    prefer_final_locals: true
+
+    # Collections
+    prefer_collection_literals: true
+    prefer_if_elements_to_conditional_expressions: true
+    prefer_is_empty: true
+    prefer_is_not_empty: true
+    prefer_iterable_whereType: true
+    prefer_spread_collections: true
+
+    # Types
+    avoid_dynamic_calls: true
+    omit_local_variable_types: true
+    always_declare_return_types: true
+    prefer_void_to_null: true

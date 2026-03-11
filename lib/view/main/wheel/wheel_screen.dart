@@ -5,11 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/model/gift/gift.dart';
-import '../../../injection.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../colors.dart';
+import '../../di/injection.dart';
 import '../balance/balance.dart';
+import '../balance/cubit/cubit.dart';
 import 'cubit/cubit.dart';
 import 'cubit/state.dart';
+import 'widgets/failure_dialog.dart';
 import 'widgets/fortune_wheel.dart';
 import 'widgets/gift_reveal_overlay.dart';
 
@@ -18,8 +21,11 @@ class WheelScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<WheelCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => getIt<WheelCubit>()),
+        BlocProvider(create: (_) => getIt<BalanceCubit>()),
+      ],
       child: const _WheelBody(),
     );
   }
@@ -42,8 +48,8 @@ class _WheelBodyState extends State<_WheelBody> {
     final cubit = context.read<WheelCubit>();
     _wheelController
       ..onSpin = cubit.spin
-      ..onSpinComplete = (degrees) => cubit.onSpinComplete(degrees);
-    _wheelController.onLongPressCenter = cubit.resetBalance;
+      ..onSpinComplete = cubit.onSpinComplete
+      ..onLongPressCenter = cubit.resetBalance;
   }
 
   @override
@@ -80,10 +86,17 @@ class _WheelBodyState extends State<_WheelBody> {
           _showGiftReveal(state.wonGift);
         } else if (state is WheelFailure) {
           _wheelController.stopSpin();
+          final message = switch (state.error) {
+            WheelError.notEnoughCoins => S.of(context).errorNotEnoughCoins,
+            WheelError.noConnection => S.of(context).errorNoConnection,
+            WheelError.tooManyRequests => S.of(context).errorTooManyRequests,
+            WheelError.spinError => S.of(context).errorSpin,
+            WheelError.saveGiftError => S.of(context).errorSaveGift,
+          };
           showDialog(
             context: context,
             barrierColor: Colors.black87,
-            builder: (_) => _FailureDialog(message: state.message),
+            builder: (_) => FailureDialog(message: message),
           );
         }
       },
@@ -101,6 +114,7 @@ class _WheelBodyState extends State<_WheelBody> {
                     WheelIdle(:final savedDegrees) => savedDegrees ?? 0.0,
                     _ => 0.0,
                   };
+
                   return SizedBox(
                     width: 300,
                     height: 300,
@@ -162,7 +176,7 @@ class _SpinButton extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 onPressed: isSpinning ? null : () => context.read<WheelCubit>().spin(),
                 child: Text(
-                  'Spin!',
+                  S.of(context).spin,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: bg,
                     fontWeight: FontWeight.bold,
@@ -173,64 +187,6 @@ class _SpinButton extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _FailureDialog extends StatelessWidget {
-  final String message;
-
-  const _FailureDialog({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: hint, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Symbols.error_rounded, color: primary, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.white,
-                  ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const LinearGradient(colors: [primary, secondary]),
-                ),
-                child: MaterialButton(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    'OK',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: bg,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

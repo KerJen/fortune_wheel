@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../../../injection.dart';
 import 'cubit/cubit.dart';
 import 'cubit/state.dart';
 
@@ -11,9 +10,7 @@ class Balance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<BalanceCubit>(),
-      child: BlocBuilder<BalanceCubit, BalanceState>(
+    return BlocBuilder<BalanceCubit, BalanceState>(
       builder: (context, state) {
         return Container(
           padding: const EdgeInsets.all(10),
@@ -37,7 +34,6 @@ class Balance extends StatelessWidget {
           ),
         );
       },
-      ),
     );
   }
 }

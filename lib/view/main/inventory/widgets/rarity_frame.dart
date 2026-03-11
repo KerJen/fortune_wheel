@@ -95,14 +95,14 @@ class LegendaryConfig extends RarityConfig {
 
 class RarityFrame extends StatefulWidget {
   final GiftRarity rarity;
-  final Widget child;
   final double borderRadius;
+  final Widget child;
 
   const RarityFrame({
     super.key,
     required this.rarity,
-    required this.child,
     this.borderRadius = 12,
+    required this.child,
   });
 
   @override
@@ -111,21 +111,22 @@ class RarityFrame extends StatefulWidget {
 
 class _RarityFrameState extends State<RarityFrame> with SingleTickerProviderStateMixin {
   late final RarityConfig _config = RarityConfig.from(widget.rarity);
-  late final AnimationController _controller;
+  AnimationController? _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: _config.shimmerDurationMs.clamp(1, 99999)),
-    );
-    if (_config.animated) _controller.repeat();
+    if (_config.animated) {
+      _controller = AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: _config.shimmerDurationMs),
+      )..repeat();
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -136,44 +137,74 @@ class _RarityFrameState extends State<RarityFrame> with SingleTickerProviderStat
       child: widget.child,
     );
 
+    if (!_config.animated) {
+      return _RarityFrameContent(
+        config: _config,
+        progress: 0,
+        borderRadius: widget.borderRadius,
+        child: clippedChild,
+      );
+    }
+
     return AnimatedBuilder(
-      animation: _controller,
+      animation: _controller!,
       builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            boxShadow: _buildGlow(),
-          ),
-          child: CustomPaint(
-            painter: _BorderPainter(
-              config: _config,
-              progress: _controller.value,
-              borderRadius: widget.borderRadius,
-            ),
-            foregroundPainter: _config.particleCount > 0
-                ? _ParticlePainter(
-                    config: _config,
-                    progress: _controller.value,
-                    borderRadius: widget.borderRadius,
-                  )
-                : null,
-            child: child,
-          ),
+        return _RarityFrameContent(
+          config: _config,
+          progress: _controller!.value,
+          borderRadius: widget.borderRadius,
+          child: child!,
         );
       },
       child: clippedChild,
     );
   }
+}
 
-  List<BoxShadow> _buildGlow() {
-    if (_config.glowBlur <= 0) return [];
-    return [
-      BoxShadow(
-        color: _config.color.withValues(alpha: _config.glowOpacity),
-        blurRadius: _config.glowAtProgress(_controller.value),
-        spreadRadius: 1,
+class _RarityFrameContent extends StatelessWidget {
+  final RarityConfig config;
+  final double progress;
+  final double borderRadius;
+  final Widget child;
+
+  const _RarityFrameContent({
+    required this.config,
+    required this.progress,
+    required this.borderRadius,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: config.glowBlur > 0
+            ? [
+                BoxShadow(
+                  color: config.color.withValues(alpha: config.glowOpacity),
+                  blurRadius: config.glowAtProgress(progress),
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
       ),
-    ];
+      child: CustomPaint(
+        painter: _BorderPainter(
+          config: config,
+          progress: progress,
+          borderRadius: borderRadius,
+        ),
+        foregroundPainter: config.particleCount > 0
+            ? _ParticlePainter(
+                config: config,
+                progress: progress,
+                borderRadius: borderRadius,
+              )
+            : null,
+        child: child,
+      ),
+    );
   }
 }
 
@@ -228,6 +259,8 @@ class _BorderPainter extends CustomPainter {
 }
 
 class _ParticlePainter extends CustomPainter {
+  static const _particleBlur = MaskFilter.blur(BlurStyle.normal, 1.5);
+
   final RarityConfig config;
   final double progress;
   final double borderRadius;
@@ -243,8 +276,9 @@ class _ParticlePainter extends CustomPainter {
     final center = (Offset.zero & size).center;
     final rx = center.dx + 4;
     final ry = center.dy + 4;
+    final paint = Paint()..maskFilter = _particleBlur;
 
-    for (int i = 0; i < config.particleCount; i++) {
+    for (var i = 0; i < config.particleCount; i++) {
       final baseAngle = (i / config.particleCount) * 2 * pi;
       final angle = baseAngle + progress * 2 * pi;
       final wobble = sin(progress * 4 * pi + i * 1.7) * 3;
@@ -255,10 +289,7 @@ class _ParticlePainter extends CustomPainter {
       final opacity = 0.4 + 0.6 * ((sin(progress * 2 * pi + i * 2.3) + 1) / 2);
       final radius = 1.5 + 1.0 * ((sin(progress * 3 * pi + i * 1.5) + 1) / 2);
 
-      final paint = Paint()
-        ..color = config.color.withValues(alpha: opacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
-
+      paint.color = config.color.withValues(alpha: opacity);
       canvas.drawCircle(Offset(x, y), radius, paint);
     }
   }

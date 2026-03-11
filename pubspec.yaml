@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   flutter_animate: ^4.5.2
   flutter_bloc: ^9.1.1
   flutter_svg: ^2.2.4
@@ -48,10 +51,12 @@ flutter_native_splash:
     image: assets/images/logo_splash.png
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
     - assets/icons/
     - assets/images/
+    - assets/images/gifts/
     - assets/sounds/
   fonts:
     - family: Rubik

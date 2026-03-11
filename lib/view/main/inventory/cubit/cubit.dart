@@ -24,7 +24,8 @@ class InventoryCubit extends Cubit<InventoryState> {
   }
 
   List<InventoryItem> _sortByRarity(List<InventoryItem> items) {
-    return [...items]..sort((a, b) => b.gift.rarity.index.compareTo(a.gift.rarity.index));
+    return List.of(items, growable: false)
+      ..sort((a, b) => b.gift.rarity.index.compareTo(a.gift.rarity.index));
   }
 
   Future<void> clearInventory() => _giftRepository.clearInventory();

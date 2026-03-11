@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../colors.dart';
 
 class CreditsScreen extends StatelessWidget {
@@ -8,15 +9,15 @@ class CreditsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return const SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 16),
             child: Center(child: _Title()),
           ),
-          const Expanded(
+          Expanded(
             child: Center(
               child: _CreditsList(),
             ),
@@ -33,8 +34,8 @@ class _Title extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-          'CREDITS',
-          style: TextStyle(
+          S.of(context).creditsTitle,
+          style: const TextStyle(
             color: secondary,
             fontSize: 28,
             fontWeight: FontWeight.w700,
@@ -61,13 +62,13 @@ class _CreditsList extends StatelessWidget {
       children:
           [
                 _CreditEntry(
-                  role: 'Разработка и UX/UI',
+                  role: S.of(context).creditsRoleDev,
                   name: 'Антон Янкин',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 32),
                 _CreditEntry(
-                  role: 'Графика',
+                  role: S.of(context).creditsRoleGraphics,
                   name: 'Владислава Гусейнова',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),

@@ -9,14 +9,14 @@ import '../../model/inventory_item/inventory_item.dart';
 
 abstract class GiftLocalSource {
   static const wheelGifts = <Gift>[
-    Gift.regular(name: 'Букет клевый крутой', imagePath: 'assets/images/icon.png', rarity: GiftRarity.rare),
-    Gift.regular(name: 'Цветочек', imagePath: 'assets/images/icon.png', rarity: GiftRarity.common),
-    Gift.regular(name: 'Духи', imagePath: 'assets/images/icon.png', rarity: GiftRarity.epic),
-    Gift.regular(name: 'Коробка конфет', imagePath: 'assets/images/icon.png', rarity: GiftRarity.common),
-    Gift.regular(name: 'Носок', imagePath: 'assets/images/icon.png', rarity: GiftRarity.common),
-    Gift.regular(name: 'Машина', imagePath: 'assets/images/icon.png', rarity: GiftRarity.legendary),
-    Gift.regular(name: 'Поцелуйчик', imagePath: 'assets/images/icon.png', rarity: GiftRarity.rare),
-    Gift.coin(name: '50 сердечек', imagePath: 'assets/images/icon.png', value: 50, rarity: GiftRarity.epic),
+    Gift.regular(name: 'bouquet', imagePath: 'assets/images/gifts/bouquet.png', rarity: GiftRarity.rare),
+    Gift.regular(name: 'tulip', imagePath: 'assets/images/gifts/tulip.png', rarity: GiftRarity.common),
+    Gift.regular(name: 'perfume', imagePath: 'assets/images/gifts/perfume.png', rarity: GiftRarity.epic),
+    Gift.regular(name: 'chocolates', imagePath: 'assets/images/gifts/chocolate.png', rarity: GiftRarity.common),
+    Gift.regular(name: 'sock', imagePath: 'assets/images/gifts/sock.png', rarity: GiftRarity.common),
+    Gift.regular(name: 'car', imagePath: 'assets/images/gifts/car.png', rarity: GiftRarity.legendary),
+    Gift.regular(name: 'kiss', imagePath: 'assets/images/gifts/kiss.png', rarity: GiftRarity.rare),
+    Gift.coin(name: 'hearts', imagePath: 'assets/images/gifts/hearts.png', value: 50, rarity: GiftRarity.epic),
   ];
 
   List<InventoryItem> getInventory();

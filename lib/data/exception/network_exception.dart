@@ -6,3 +6,7 @@ class NetworkException implements Exception {
   @override
   String toString() => 'NetworkException: $details';
 }
+
+class TooManyRequestsException extends NetworkException {
+  const TooManyRequestsException() : super('Too many requests (429)');
+}

@@ -108,6 +108,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
       value: widget.initialAngle,
     );
     _spinController.addListener(() {
+      _ensureTickerRunning();
       setState(() {
         _wheelAngle = _spinController.value;
       });
@@ -119,7 +120,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
       lowerBound: 1.0 / 1.5,
       upperBound: 1.0,
     );
-    _physicsTicker = createTicker(_tick)..start();
+    _physicsTicker = createTicker(_tick);
     _initSound();
     _loadGiftImages();
   }
@@ -130,7 +131,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
   ];
 
   static const _placeholderAsset = 'assets/images/icon.png';
-  static const _imageDecodeSize = 80;
+  static const _imageDecodeSize = 256;
 
   Future<void> _loadGiftImages() async {
     final paths = widget.gifts.map((g) => g.imagePath ?? _placeholderAsset);
@@ -193,6 +194,13 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
     super.dispose();
   }
 
+  void _ensureTickerRunning() {
+    if (!_physicsTicker.isActive) {
+      _lastTickTime = Duration.zero;
+      _physicsTicker.start();
+    }
+  }
+
   void _tick(Duration elapsed) {
     if (_lastTickTime == Duration.zero) {
       _lastTickTime = elapsed;
@@ -237,9 +245,15 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
 
     _arrowAngle = _arrowAngle.clamp(-_maxArrowAngle, _maxArrowAngle);
 
-    if (_arrowAngle.abs() > 0.0001 || _arrowVelocity.abs() > 0.0001) {
-      setState(() {});
+    if (_arrowAngle.abs() < 0.0001 && _arrowVelocity.abs() < 0.0001) {
+      _arrowAngle = 0;
+      _arrowVelocity = 0;
+      if (!_isSpinning) {
+        _physicsTicker.stop();
+      }
+      return;
     }
+    setState(() {});
   }
 
   double _angleTo(Offset position) {
@@ -254,6 +268,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
 
   void _panUpdate(DragUpdateDetails details) {
     if (_isSpinning) return;
+    _ensureTickerRunning();
     final currentAngle = _angleTo(details.localPosition);
     var delta = currentAngle - _previousAngle;
     if (delta > pi) delta -= 2 * pi;
@@ -289,6 +304,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
 
   void _startFreeSpin() {
     _isSpinning = true;
+    _ensureTickerRunning();
     _petalScaleController.animateTo(1.0 / 1.5, curve: Curves.easeOutCubic);
     _flowerReversed = true;
 
@@ -306,8 +322,6 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
   static const _minLandingExtraSpins = 3;
 
   void _spinTo(Gift gift, double velocity) {
-    final freeSpinSpeed = _freeSpinRevolutions * 2 * pi / _freeSpinDuration.inMilliseconds * 1000;
-
     _spinController.stop();
     _isSpinning = true;
 
@@ -330,6 +344,7 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
     }
 
     final totalDistance = direction * _minLandingExtraSpins * 2 * pi + offsetToTarget;
+    final freeSpinSpeed = _freeSpinRevolutions * 2 * pi / _freeSpinDuration.inMilliseconds * 1000;
     final durationSeconds = totalDistance.abs() * _easeOutCubicDerivativeAtZero / freeSpinSpeed;
     final durationMs = (durationSeconds * 1000).round().clamp(2000, 10000);
 
@@ -360,49 +375,62 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
             onPanStart: _panStart,
             onPanUpdate: _panUpdate,
             onPanEnd: _panEnd,
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_flowerController, _petalScaleController]),
-              builder: (context, child) {
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned.fill(
-                      child: Transform.rotate(
-                        angle: _wheelAngle,
-                        child: CustomPaint(
-                          painter: _WheelPainter(
-                            colors: _wheelColors,
-                            images: _giftImages,
-                          ),
-                          foregroundPainter: _FlowerPainter(
-                            progress: _flowerController.value,
-                            petalScale: _petalScaleController.value,
-                            reversed: _flowerReversed,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned.fill(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: Transform.rotate(
+                      angle: _wheelAngle,
                       child: CustomPaint(
-                        painter: _ArrowPainter(tiltAngle: _arrowAngle),
-                      ),
-                    ),
-                    Center(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onLongPress: () {
-                          HapticFeedback.heavyImpact();
-                          widget.controller.onLongPressCenter?.call();
-                        },
-                        child: SizedBox(
-                          width: constraints.maxWidth * _FlowerPainter.centerRadiusFraction * 2,
-                          height: constraints.maxHeight * _FlowerPainter.centerRadiusFraction * 2,
+                        painter: _WheelPainter(
+                          colors: _wheelColors,
+                          images: _giftImages,
                         ),
                       ),
                     ),
-                  ],
-                );
-              },
+                  ),
+                ),
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([_flowerController, _petalScaleController]),
+                      builder: (context, _) {
+                        return Transform.rotate(
+                          angle: _wheelAngle,
+                          child: CustomPaint(
+                            painter: _FlowerPainter(
+                              progress: _flowerController.value,
+                              petalScale: _petalScaleController.value,
+                              reversed: _flowerReversed,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: _ArrowPainter(tiltAngle: _arrowAngle),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onLongPress: () {
+                      HapticFeedback.heavyImpact();
+                      widget.controller.onLongPressCenter?.call();
+                    },
+                    child: SizedBox(
+                      width: constraints.maxWidth * _FlowerPainter.centerRadiusFraction * 2,
+                      height: constraints.maxHeight * _FlowerPainter.centerRadiusFraction * 2,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -414,19 +442,19 @@ class _FortuneWheelState extends State<FortuneWheel> with TickerProviderStateMix
 class _WheelPainter extends CustomPainter {
   final List<Color> colors;
   final List<ui.Image?> images;
-  final double rimWidth;
 
+  static const _rimWidth = 16.0;
   static const _shadowBlur = 5.0;
   static const _shadowSpread = 10.0;
   static final _shadowColor = Colors.black.withValues(alpha: 0.2);
 
-  _WheelPainter({required this.colors, required this.images, this.rimWidth = 16});
+  _WheelPainter({required this.colors, required this.images});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
     final outerRadius = min(size.width, size.height) / 2;
-    final sectorRadius = outerRadius - rimWidth;
+    final sectorRadius = outerRadius - _rimWidth;
     final sectorRect = Rect.fromCircle(center: center, radius: sectorRadius);
     final sectorCount = colors.length;
     final sweepAngle = 2 * pi / sectorCount;
@@ -463,12 +491,13 @@ class _WheelPainter extends CustomPainter {
 
       final midAngle = i * sweepAngle - pi / 2 + sweepAngle / 2;
 
-      canvas.save();
-      canvas.translate(
-        center.dx + imageRadius * cos(midAngle),
-        center.dy + imageRadius * sin(midAngle),
-      );
-      canvas.rotate(midAngle + pi / 2);
+      canvas
+        ..save()
+        ..translate(
+          center.dx + imageRadius * cos(midAngle),
+          center.dy + imageRadius * sin(midAngle),
+        )
+        ..rotate(midAngle + pi / 2);
 
       final src = Rect.fromLTWH(
         0,
@@ -482,30 +511,31 @@ class _WheelPainter extends CustomPainter {
         height: imageSize,
       );
 
-      final rrect = RRect.fromRectAndRadius(dst, Radius.circular(imageSize * 0.2));
-      canvas.clipRRect(rrect);
-      canvas.drawImageRect(image, src, dst, Paint());
-
-      canvas.restore();
+      final paint = Paint()..filterQuality = FilterQuality.medium;
+      canvas
+        ..drawImageRect(image, src, dst, paint)
+        ..restore();
     }
 
-    canvas.save();
-    canvas.clipPath(
-      Path()..addOval(Rect.fromCircle(center: center, radius: sectorRadius)),
-    );
+    canvas
+      ..save()
+      ..clipPath(
+        Path()..addOval(Rect.fromCircle(center: center, radius: sectorRadius)),
+      );
     final innerShadowPaint = Paint()
       ..color = _shadowColor
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _shadowBlur)
       ..style = PaintingStyle.stroke
       ..strokeWidth = _shadowSpread * 2;
-    canvas.drawCircle(center, sectorRadius, innerShadowPaint);
-    canvas.restore();
+    canvas
+      ..drawCircle(center, sectorRadius, innerShadowPaint)
+      ..restore();
 
     final rimPaint = Paint()
       ..style = PaintingStyle.stroke
       ..color = _rimColor
-      ..strokeWidth = rimWidth;
-    canvas.drawCircle(center, outerRadius - rimWidth / 2, rimPaint);
+      ..strokeWidth = _rimWidth;
+    canvas.drawCircle(center, outerRadius - _rimWidth / 2, rimPaint);
 
     final pegCenterRadius = outerRadius - _pegInset + _pegRadius;
     final pegFill = Paint()
@@ -522,14 +552,14 @@ class _WheelPainter extends CustomPainter {
         center.dx + pegCenterRadius * cos(angle),
         center.dy + pegCenterRadius * sin(angle),
       );
-      canvas.drawCircle(pegCenter, _pegRadius, pegFill);
-      canvas.drawCircle(pegCenter, _pegRadius, pegStroke);
+      canvas
+        ..drawCircle(pegCenter, _pegRadius, pegFill)
+        ..drawCircle(pegCenter, _pegRadius, pegStroke);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _WheelPainter oldDelegate) =>
-      oldDelegate.colors != colors || oldDelegate.images != images || oldDelegate.rimWidth != rimWidth;
+  bool shouldRepaint(covariant _WheelPainter oldDelegate) => oldDelegate.colors != colors || oldDelegate.images != images;
 }
 
 class _FlowerPainter extends CustomPainter {
@@ -565,9 +595,10 @@ class _FlowerPainter extends CustomPainter {
       ..color = bg
       ..strokeWidth = 2;
 
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(rotation);
+    canvas
+      ..save()
+      ..translate(center.dx, center.dy)
+      ..rotate(rotation);
 
     final anchorOffset = centerRadius / 2;
 
@@ -576,8 +607,9 @@ class _FlowerPainter extends CustomPainter {
       final petalHeight = baseRadius * 1.5 * animatedScale;
       final petalWidth = baseRadius * 0.7 * animatedScale;
 
-      canvas.save();
-      canvas.rotate(angle);
+      canvas
+        ..save()
+        ..rotate(angle);
 
       final petalRect = Rect.fromCenter(
         center: Offset(0, -anchorOffset - petalHeight / 2),
@@ -586,10 +618,11 @@ class _FlowerPainter extends CustomPainter {
       );
       final shadowRect = petalRect.shift(const Offset(0, 4));
 
-      canvas.drawOval(shadowRect, shadowPaint);
-      canvas.drawOval(petalRect, petalFill);
-      canvas.drawOval(petalRect, petalStroke);
-      canvas.restore();
+      canvas
+        ..drawOval(shadowRect, shadowPaint)
+        ..drawOval(petalRect, petalFill)
+        ..drawOval(petalRect, petalStroke)
+        ..restore();
     }
 
     final centerFill = Paint()
@@ -600,11 +633,11 @@ class _FlowerPainter extends CustomPainter {
       ..color = bg
       ..strokeWidth = 2;
 
-    canvas.drawCircle(const Offset(0, 4), centerRadius, shadowPaint);
-    canvas.drawCircle(Offset.zero, centerRadius, centerFill);
-    canvas.drawCircle(Offset.zero, centerRadius, centerStroke);
-
-    canvas.restore();
+    canvas
+      ..drawCircle(const Offset(0, 4), centerRadius, shadowPaint)
+      ..drawCircle(Offset.zero, centerRadius, centerFill)
+      ..drawCircle(Offset.zero, centerRadius, centerStroke)
+      ..restore();
   }
 
   @override
@@ -630,10 +663,11 @@ class _ArrowPainter extends CustomPainter {
     final arrowTop = rimTop - 20;
     final pivotY = arrowTop + _arrowHeight * 0.25;
 
-    canvas.save();
-    canvas.translate(center.dx, pivotY);
-    canvas.rotate(tiltAngle);
-    canvas.translate(-center.dx, -pivotY);
+    canvas
+      ..save()
+      ..translate(center.dx, pivotY)
+      ..rotate(tiltAngle)
+      ..translate(-center.dx, -pivotY);
 
     final arrowBottom = arrowTop + _arrowHeight;
 
@@ -663,16 +697,17 @@ class _ArrowPainter extends CustomPainter {
       ..lineTo(topRight.dx, topRight.dy)
       ..lineTo(tip.dx, tip.dy)
       ..close();
-    canvas.drawPath(arrowPath, fillPaint);
-    canvas.drawPath(arrowPath, strokePaint);
+    canvas
+      ..drawPath(arrowPath, fillPaint)
+      ..drawPath(arrowPath, strokePaint);
 
     final pivotFill = Paint()
       ..style = PaintingStyle.fill
       ..color = Colors.white;
-    canvas.drawCircle(Offset(center.dx, pivotY), _pivotRadius, pivotFill);
-    canvas.drawCircle(Offset(center.dx, pivotY), _pivotRadius, strokePaint);
-
-    canvas.restore();
+    canvas
+      ..drawCircle(Offset(center.dx, pivotY), _pivotRadius, pivotFill)
+      ..drawCircle(Offset(center.dx, pivotY), _pivotRadius, strokePaint)
+      ..restore();
   }
 
   @override

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../data/model/gift/gift.dart';
+import '../../../data/model/gift/gift.dart';
 
 const _placeholder = 'assets/images/icon.png';
 

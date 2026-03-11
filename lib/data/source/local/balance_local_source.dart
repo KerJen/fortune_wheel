@@ -27,7 +27,7 @@ class BalanceLocalSourceImpl implements BalanceLocalSource {
   int getBalance() => _prefs.getInt(_key) ?? _initialBalance;
 
   @override
-  Stream<int> watchBalance() => _controller.stream.asBroadcastStream()..drain().ignore();
+  Stream<int> watchBalance() => _controller.stream;
 
   @override
   Future<void> addCoins(int amount) async {

@@ -4,6 +4,8 @@ import '../../../../data/model/gift/gift.dart';
 
 part 'state.freezed.dart';
 
+enum WheelError { notEnoughCoins, noConnection, tooManyRequests, spinError, saveGiftError }
+
 @freezed
 sealed class WheelState with _$WheelState {
   const factory WheelState.idle({
@@ -21,6 +23,6 @@ sealed class WheelState with _$WheelState {
   }) = WheelStopped;
 
   const factory WheelState.failure({
-    required String message,
+    required WheelError error,
   }) = WheelFailure;
 }

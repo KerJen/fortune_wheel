@@ -128,14 +128,14 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( double? savedDegrees)?  idle,TResult Function()?  spinning,TResult Function( Gift targetGift)?  landing,TResult Function( Gift wonGift)?  stopped,TResult Function( String message)?  failure,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( double? savedDegrees)?  idle,TResult Function()?  spinning,TResult Function( Gift targetGift)?  landing,TResult Function( Gift wonGift)?  stopped,TResult Function( WheelError error)?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case WheelIdle() when idle != null:
 return idle(_that.savedDegrees);case WheelSpinning() when spinning != null:
 return spinning();case WheelLanding() when landing != null:
 return landing(_that.targetGift);case WheelStopped() when stopped != null:
 return stopped(_that.wonGift);case WheelFailure() when failure != null:
-return failure(_that.message);case _:
+return failure(_that.error);case _:
   return orElse();
 
 }
@@ -153,14 +153,14 @@ return failure(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( double? savedDegrees)  idle,required TResult Function()  spinning,required TResult Function( Gift targetGift)  landing,required TResult Function( Gift wonGift)  stopped,required TResult Function( String message)  failure,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( double? savedDegrees)  idle,required TResult Function()  spinning,required TResult Function( Gift targetGift)  landing,required TResult Function( Gift wonGift)  stopped,required TResult Function( WheelError error)  failure,}) {final _that = this;
 switch (_that) {
 case WheelIdle():
 return idle(_that.savedDegrees);case WheelSpinning():
 return spinning();case WheelLanding():
 return landing(_that.targetGift);case WheelStopped():
 return stopped(_that.wonGift);case WheelFailure():
-return failure(_that.message);}
+return failure(_that.error);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -174,14 +174,14 @@ return failure(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( double? savedDegrees)?  idle,TResult? Function()?  spinning,TResult? Function( Gift targetGift)?  landing,TResult? Function( Gift wonGift)?  stopped,TResult? Function( String message)?  failure,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( double? savedDegrees)?  idle,TResult? Function()?  spinning,TResult? Function( Gift targetGift)?  landing,TResult? Function( Gift wonGift)?  stopped,TResult? Function( WheelError error)?  failure,}) {final _that = this;
 switch (_that) {
 case WheelIdle() when idle != null:
 return idle(_that.savedDegrees);case WheelSpinning() when spinning != null:
 return spinning();case WheelLanding() when landing != null:
 return landing(_that.targetGift);case WheelStopped() when stopped != null:
 return stopped(_that.wonGift);case WheelFailure() when failure != null:
-return failure(_that.message);case _:
+return failure(_that.error);case _:
   return null;
 
 }
@@ -441,10 +441,10 @@ $GiftCopyWith<$Res> get wonGift {
 
 
 class WheelFailure implements WheelState {
-  const WheelFailure({required this.message});
+  const WheelFailure({required this.error});
   
 
- final  String message;
+ final  WheelError error;
 
 /// Create a copy of WheelState
 /// with the given fields replaced by the non-null parameter values.
@@ -456,16 +456,16 @@ $WheelFailureCopyWith<WheelFailure> get copyWith => _$WheelFailureCopyWithImpl<W
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WheelFailure&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,error);
 
 @override
 String toString() {
-  return 'WheelState.failure(message: $message)';
+  return 'WheelState.failure(error: $error)';
 }
 
 
@@ -476,7 +476,7 @@ abstract mixin class $WheelFailureCopyWith<$Res> implements $WheelStateCopyWith<
   factory $WheelFailureCopyWith(WheelFailure value, $Res Function(WheelFailure) _then) = _$WheelFailureCopyWithImpl;
 @useResult
 $Res call({
- String message
+ WheelError error
 });
 
 
@@ -493,10 +493,10 @@ class _$WheelFailureCopyWithImpl<$Res>
 
 /// Create a copy of WheelState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? error = null,}) {
   return _then(WheelFailure(
-message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,
+error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as WheelError,
   ));
 }
 
